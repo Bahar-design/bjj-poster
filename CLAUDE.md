@@ -1,127 +1,78 @@
-# Claude Code Configuration
+# CLAUDE.md
 
-This file configures Claude Code for the BJJ Poster App project. All team members should use Claude Code with this configuration for consistency.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Context
+## Build Commands
 
-This is a serverless AWS application for generating BJJ tournament posters. The tech stack is:
+```bash
+pnpm dev              # Start all apps (web: 3000, api: 3001)
+pnpm build            # Build all packages
+pnpm test             # Run all tests
+pnpm test:integration # Run integration tests with LocalStack
+pnpm lint             # Lint code
+pnpm lint:fix         # Auto-fix lint issues
+pnpm type-check       # TypeScript type checking
 
-- **Frontend**: Next.js 14 (App Router) + Tailwind + shadcn/ui
-- **Backend**: AWS Lambda (TypeScript/Node.js 20)
-- **Database**: DynamoDB (single-table design)
-- **Storage**: S3
-- **Queue**: SQS
-- **AI**: Amazon Bedrock (image generation)
-- **Auth**: Amazon Cognito
-- **Payments**: Stripe
-- **IaC**: AWS CDK (TypeScript)
-- **Local Dev**: LocalStack
+# LocalStack (local AWS services)
+pnpm localstack:up    # Start LocalStack container
+pnpm localstack:down  # Stop LocalStack
+pnpm localstack:reset # Reset all LocalStack data
 
-## Code Style Guidelines
-
-### TypeScript
-
-- Use explicit return types for exported functions
-- Prefer `interface` over `type` for object shapes
-- Use `unknown` instead of `any` where possible
-- Destructure props and function parameters
-- Use early returns to reduce nesting
-
-### Naming Conventions
-
-- **Files**: kebab-case (e.g., `create-poster.ts`)
-- **Components**: PascalCase (e.g., `PosterBuilder.tsx`)
-- **Functions**: camelCase (e.g., `createPoster`)
-- **Constants**: SCREAMING_SNAKE_CASE (e.g., `MAX_FILE_SIZE`)
-- **Types/Interfaces**: PascalCase with descriptive names (e.g., `CreatePosterInput`)
-
-### Lambda Handlers
-
-All Lambda handlers should follow this pattern:
-
-```typescript
-import { APIGatewayProxyHandler } from 'aws-lambda';
-import { logger } from '@bjj-poster/core';
-import { createResponse, parseBody } from '../lib/api-utils';
-
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const requestId = event.requestContext.requestId;
-  logger.info('Handler invoked', { requestId, path: event.path });
-
-  try {
-    // 1. Parse and validate input
-    const input = parseBody(event.body);
-    
-    // 2. Execute business logic
-    const result = await doSomething(input);
-    
-    // 3. Return success response
-    return createResponse(200, result);
-  } catch (error) {
-    logger.error('Handler failed', { requestId, error });
-    return createResponse(500, { message: 'Internal server error' });
-  }
-};
+# CDK deployment (from infra/ directory)
+cd infra && pnpm cdk deploy --all --context stage=dev
 ```
 
-### DynamoDB Access
+## Architecture
 
-Use the `@bjj-poster/db` package for all DynamoDB operations:
+This is a monorepo using pnpm workspaces and Turborepo for a serverless BJJ tournament poster generator.
 
-```typescript
-import { db, UserEntity } from '@bjj-poster/db';
+### Workspace Structure
 
-// Get user
-const user = await db.users.get(userId);
+- `apps/api/` - Lambda handlers served locally via Express adapter (`local-server.ts`)
+- `apps/web/` - Next.js 14 frontend (not yet scaffolded)
+- `packages/core/` - Shared utilities: logger, error classes (`AppError`, `ValidationError`, etc.), types
+- `packages/db/` - DynamoDB client and repositories (single-table design)
+- `packages/ui/` - Shared React components (not yet scaffolded)
+- `packages/config/` - Shared ESLint configs
+- `infra/` - AWS CDK stacks (not yet scaffolded)
 
-// Create poster
-await db.posters.create({
-  userId,
-  templateId,
-  status: 'PENDING',
-});
-```
+### DynamoDB Single-Table Design
 
-### Error Handling
+All entities share one table with composite keys. Key patterns:
 
-- Use custom error classes from `@bjj-poster/core`
-- Always log errors with context
-- Return appropriate HTTP status codes
-- Never expose internal error details to clients
+| Entity | PK | SK |
+|--------|----|----|
+| User | `USER#<id>` | `PROFILE` |
+| Poster | `USER#<id>` | `POSTER#<timestamp>` |
+| Template | `TEMPLATE` | `<category>#<id>` |
 
-## Package Structure
+Use `@bjj-poster/db` for all database operations - never access DynamoDB directly.
 
-```
-packages/
-├── core/       # Shared utilities, types, error classes
-├── db/         # DynamoDB client, entities, repositories
-├── ui/         # Shared React components
-└── config/     # ESLint, TypeScript configs
-```
+### Lambda Handler Pattern
 
-## Testing Requirements
+Handlers go in `apps/api/src/handlers/{domain}/{action}.ts`. See `.claude/skills/lambda-handler.md` for the full template. Key points:
+- Extract userId from `event.requestContext.authorizer?.claims?.sub`
+- Use error classes from `@bjj-poster/core` (`ValidationError`, `NotFoundError`, etc.)
+- Always log with `requestId` for tracing
 
-- Unit tests for all business logic functions
-- Integration tests for Lambda handlers (using LocalStack)
-- E2E tests for critical user flows
-- Minimum 80% code coverage for `packages/`
+## Code Style
 
-## Commit Message Format
+- **Files**: kebab-case (`create-poster.ts`)
+- **Components**: PascalCase (`PosterBuilder.tsx`)
+- **Types/Interfaces**: PascalCase, use `interface` over `type` for objects
+- Explicit return types for exported functions
+- Use `unknown` over `any`
 
-Use conventional commits:
+## Commit Format
 
 ```
 feat(api): add poster creation endpoint
 fix(web): correct image upload validation
-docs: update onboarding guide
 test(db): add user repository tests
-refactor(core): extract validation utilities
 ```
 
-## Before Submitting a PR
+## Local Development URLs
 
-1. Run `pnpm lint` - no errors
-2. Run `pnpm type-check` - no errors
-3. Run `pnpm test` - all tests pass
-4. Run `pnpm build` - builds successfully
-5. Update relevant documentation
+- Web app: http://localhost:3000
+- API: http://localhost:3001
+- DynamoDB Admin: http://localhost:8001

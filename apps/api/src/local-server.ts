@@ -7,6 +7,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 
 // Import handlers as they're created
+import { handler as helloHandler } from './handlers/hello/index.js';
 // import { handler as getProfile } from './handlers/user/get-profile';
 // import { handler as createPoster } from './handlers/poster/create-poster';
 
@@ -125,12 +126,15 @@ function lambdaAdapter(handler: LambdaHandler) {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     environment: 'local',
   });
 });
+
+// Hello Lambda - our first real handler
+app.get('/api/hello', lambdaAdapter(helloHandler));
 
 // Example routes (uncomment as handlers are implemented):
 // app.get('/api/users/:id', lambdaAdapter(getProfile));
