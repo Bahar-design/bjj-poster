@@ -8,6 +8,25 @@ export interface ImageMetadata {
 }
 
 /**
+ * Position can be pixel coordinates or named anchor
+ */
+export type Position =
+  | { x: number; y: number }
+  | 'center'
+  | 'top-center'
+  | 'bottom-center'
+  | 'left-center'
+  | 'right-center';
+
+/**
+ * Shape mask for images
+ */
+export type MaskShape =
+  | { type: 'none' }
+  | { type: 'circle' }
+  | { type: 'rounded-rect'; radius: number };
+
+/**
  * Gradient direction for backgrounds
  */
 export type GradientDirection = 'to-bottom' | 'to-right' | 'to-bottom-right' | 'radial';
