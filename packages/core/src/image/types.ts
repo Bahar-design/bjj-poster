@@ -56,3 +56,35 @@ export interface CanvasOptions {
   height: number;
   fill: CanvasFill;
 }
+
+/**
+ * Border configuration for composite layers
+ */
+export interface Border {
+  /** Border width in pixels (0-200) */
+  width: number;
+  /** Border color as hex (#rrggbb) */
+  color: string;
+}
+
+/**
+ * Shadow configuration for composite layers
+ */
+export interface Shadow {
+  /** Blur radius in pixels (0-100) */
+  blur: number;
+  /** Horizontal offset in pixels */
+  offsetX: number;
+  /** Vertical offset in pixels */
+  offsetY: number;
+  /** Shadow color as hex (#rrggbb) or rgba() */
+  color: string;
+}
+
+/**
+ * Size specification for image resizing.
+ * At least one dimension must be specified.
+ */
+export type LayerSize =
+  | { width: number; height?: number }
+  | { height: number; width?: number };

@@ -1,15 +1,17 @@
 import sharp, { Sharp } from 'sharp';
+import { logger } from '../logger.js';
 import { ImageProcessingError, InvalidInputError } from './errors.js';
-import type { MaskShape, Position } from './types.js';
+import { isValidHexColor, parseRgbaColor, parseColor } from './color-utils.js';
+import type { MaskShape, Position, Border, Shadow, LayerSize } from './types.js';
 
 
 export interface CompositeLayer {
   image: Sharp | Buffer;
   position: Position;
-  size?: { width: number; height?: number } | { height: number; width?: number }; // resize image to maintain aspect ratio
-  mask?: MaskShape; // circle, rounded-rect, or none
-  border?: { width: number; color: string };
-  shadow?: { blur: number; offsetX: number; offsetY: number; color: string }; // adds drop shadow behind image
+  size?: LayerSize;
+  mask?: MaskShape;
+  border?: Border;
+  shadow?: Shadow;
   opacity?: number; // 0-1
 }
 
@@ -43,45 +45,6 @@ function getDimensions(
     throw new InvalidInputError(`${context}: unable to read image dimensions`);
   }
   return { width: metadata.width, height: metadata.height };
-}
-
-function isValidHexColor(color: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(color);
-}
-
-// parses rgba color string, for Sharp instance to have as { r, g, b, alpha } objects
-function parseRgbaColor(color: string): { r: number; g: number; b: number; alpha: number } | null {
-  const rgbaMatch = /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/.exec(color);
-  if (rgbaMatch) {
-    return {
-      r: parseInt(rgbaMatch[1], 10),
-      g: parseInt(rgbaMatch[2], 10),
-      b: parseInt(rgbaMatch[3], 10),
-      alpha: rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1,
-    };
-  }
-  return null;
-}
-
-// parses hex colors to rgba values
-function hexToRgba(hex: string): { r: number; g: number; b: number; alpha: number } {
-  const result = /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/.exec(hex);
-  if (!result) {
-    throw new InvalidInputError(`Invalid hex color format: ${hex}. Expected format: #rrggbb`);
-  }
-  return {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16),
-    alpha: 1,
-  };
-}
-
-// parses a color string
-function parseColor(color: string): { r: number; g: number; b: number; alpha: number } {
-  const rgba = parseRgbaColor(color);
-  if (rgba) return rgba;
-  return hexToRgba(color);
 }
 
 // converts named positions (center, top-center, etc) to x & y coordinates
@@ -162,9 +125,12 @@ async function resizeImage(
 
   // logs warning if scaling up
   if (targetWidth > originalWidth || targetHeight > originalHeight) {
-    console.warn(
-      `Warning: Scaling up image from ${originalWidth}x${originalHeight} to ${targetWidth}x${targetHeight}. Quality may be reduced.`
-    );
+    logger.warn('Scaling up image may reduce quality', {
+      originalWidth,
+      originalHeight,
+      targetWidth,
+      targetHeight,
+    });
   }
 
   return sharp(imageBuffer)

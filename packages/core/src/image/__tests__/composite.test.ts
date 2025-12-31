@@ -275,7 +275,7 @@ describe('compositeImage', () => {
       await compareToSnapshot(buffer, 'composite-large-photo');
     });
 
-    it('warns when scaling up a small photo', async () => {
+    it('logs warning when scaling up a small photo', async () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const background = await createCanvas({
@@ -297,11 +297,104 @@ describe('compositeImage', () => {
         ],
       });
 
+      // Logger uses console.warn internally, check for the structured log message
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Scaling up image')
+        expect.stringContaining('Scaling up image may reduce quality')
       );
 
       consoleSpy.mockRestore();
+    });
+
+    it('throws for zero resize width', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              size: { width: 0 },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for negative resize width', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              size: { width: -100 },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for zero resize height', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              size: { height: 0 },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for negative resize height', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              size: { height: -100 },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
     });
   });
 
@@ -477,6 +570,52 @@ describe('compositeImage', () => {
         })
       ).rejects.toThrow(InvalidInputError);
     });
+
+    it('throws for negative border width', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              border: { width: -5, color: '#ffffff' },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for border width exceeding maximum (200px)', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              border: { width: 201, color: '#ffffff' },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
   });
 
   describe('shadow', () => {
@@ -570,6 +709,52 @@ describe('compositeImage', () => {
               image: athlete,
               position: 'center',
               shadow: { blur: 20, offsetX: 0, offsetY: 10, color: 'invalid' },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for negative shadow blur', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              shadow: { blur: -5, offsetX: 0, offsetY: 10, color: '#000000' },
+            },
+          ],
+        })
+      ).rejects.toThrow(InvalidInputError);
+    });
+
+    it('throws for shadow blur exceeding maximum (100)', async () => {
+      const background = await createCanvas({
+        width: 400,
+        height: 500,
+        fill: { type: 'solid', color: '#1a1a2e' },
+      });
+
+      const athlete = await readFile(join(FIXTURES_DIR, 'athlete.png'));
+
+      await expect(
+        compositeImage({
+          background,
+          layers: [
+            {
+              image: athlete,
+              position: 'center',
+              shadow: { blur: 101, offsetX: 0, offsetY: 10, color: '#000000' },
             },
           ],
         })
