@@ -2,9 +2,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-primary-900 p-8">
       <div className="mx-auto max-w-4xl space-y-8">
-        <h1 className="font-display text-5xl text-white">
-          BJJ Poster Builder
-        </h1>
+        <h1 className="font-display text-5xl text-white">BJJ Poster Builder</h1>
 
         <p className="font-body text-lg text-primary-300">
           Tournament poster generator for BJJ athletes
@@ -26,5 +24,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  )
+  );
 }
