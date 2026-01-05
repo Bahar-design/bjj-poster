@@ -205,4 +205,65 @@ describe('usePosterBuilderStore', () => {
       expect(state.showPreview).toBe(false);
     });
   });
+
+  describe('localStorage persistence', () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it('persists form fields to localStorage', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setField('athleteName', 'John Doe');
+        usePosterBuilderStore.getState().setField('team', 'Gracie Barra');
+        usePosterBuilderStore.getState().setField('beltRank', 'purple');
+      });
+
+      // Manually trigger persist (in real app this happens automatically)
+      usePosterBuilderStore.persist.rehydrate();
+
+      const stored = localStorage.getItem('poster-builder-draft');
+      expect(stored).not.toBeNull();
+
+      const parsed = JSON.parse(stored!);
+      expect(parsed.state.athleteName).toBe('John Doe');
+      expect(parsed.state.team).toBe('Gracie Barra');
+      expect(parsed.state.beltRank).toBe('purple');
+    });
+
+    it('excludes athletePhoto from persistence', () => {
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+
+      act(() => {
+        usePosterBuilderStore.getState().setPhoto(mockFile);
+        usePosterBuilderStore.getState().setField('athleteName', 'Test');
+      });
+
+      usePosterBuilderStore.persist.rehydrate();
+
+      const stored = localStorage.getItem('poster-builder-draft');
+      const parsed = JSON.parse(stored!);
+
+      expect(parsed.state.athletePhoto).toBeUndefined();
+      expect(parsed.state.athleteName).toBe('Test');
+    });
+
+    it('excludes UI state from persistence', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setField('athleteName', 'Test');
+        usePosterBuilderStore.getState().setGenerating(true, 50);
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+        usePosterBuilderStore.getState().togglePreview();
+      });
+
+      usePosterBuilderStore.persist.rehydrate();
+
+      const stored = localStorage.getItem('poster-builder-draft');
+      const parsed = JSON.parse(stored!);
+
+      expect(parsed.state.isGenerating).toBeUndefined();
+      expect(parsed.state.generationProgress).toBeUndefined();
+      expect(parsed.state.showAdvancedOptions).toBeUndefined();
+      expect(parsed.state.showPreview).toBeUndefined();
+    });
+  });
 });
