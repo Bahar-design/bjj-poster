@@ -1,0 +1,208 @@
+import { act } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { usePosterBuilderStore } from '../poster-builder-store';
+
+describe('usePosterBuilderStore', () => {
+  beforeEach(() => {
+    // Reset store to initial state before each test
+    act(() => {
+      usePosterBuilderStore.getState().reset();
+    });
+  });
+
+  describe('initial state', () => {
+    it('has correct default values', () => {
+      const state = usePosterBuilderStore.getState();
+
+      expect(state.athletePhoto).toBeNull();
+      expect(state.athleteName).toBe('');
+      expect(state.beltRank).toBe('white');
+      expect(state.team).toBe('');
+      expect(state.tournament).toBe('');
+      expect(state.date).toBe('');
+      expect(state.location).toBe('');
+      expect(state.selectedTemplateId).toBeNull();
+      expect(state.isGenerating).toBe(false);
+      expect(state.generationProgress).toBe(0);
+      expect(state.showAdvancedOptions).toBe(false);
+      expect(state.showPreview).toBe(false);
+    });
+  });
+
+  describe('setField', () => {
+    it('updates athleteName correctly', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setField('athleteName', 'John Doe');
+      });
+
+      expect(usePosterBuilderStore.getState().athleteName).toBe('John Doe');
+    });
+
+    it('updates beltRank correctly', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setField('beltRank', 'purple');
+      });
+
+      expect(usePosterBuilderStore.getState().beltRank).toBe('purple');
+    });
+
+    it('updates multiple fields independently', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setField('team', 'Gracie Barra');
+        usePosterBuilderStore.getState().setField('tournament', 'IBJJF Worlds');
+      });
+
+      const state = usePosterBuilderStore.getState();
+      expect(state.team).toBe('Gracie Barra');
+      expect(state.tournament).toBe('IBJJF Worlds');
+    });
+  });
+
+  describe('setPhoto', () => {
+    it('sets athletePhoto to File object', () => {
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+
+      act(() => {
+        usePosterBuilderStore.getState().setPhoto(mockFile);
+      });
+
+      expect(usePosterBuilderStore.getState().athletePhoto).toBe(mockFile);
+    });
+
+    it('sets athletePhoto to null', () => {
+      const mockFile = new File([''], 'photo.jpg', { type: 'image/jpeg' });
+
+      act(() => {
+        usePosterBuilderStore.getState().setPhoto(mockFile);
+        usePosterBuilderStore.getState().setPhoto(null);
+      });
+
+      expect(usePosterBuilderStore.getState().athletePhoto).toBeNull();
+    });
+  });
+
+  describe('setTemplate', () => {
+    it('sets selectedTemplateId', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setTemplate('template-123');
+      });
+
+      expect(usePosterBuilderStore.getState().selectedTemplateId).toBe(
+        'template-123'
+      );
+    });
+
+    it('clears selectedTemplateId with null', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setTemplate('template-123');
+        usePosterBuilderStore.getState().setTemplate(null);
+      });
+
+      expect(usePosterBuilderStore.getState().selectedTemplateId).toBeNull();
+    });
+  });
+
+  describe('setGenerating', () => {
+    it('sets isGenerating to true', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setGenerating(true);
+      });
+
+      expect(usePosterBuilderStore.getState().isGenerating).toBe(true);
+    });
+
+    it('sets isGenerating and progress together', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setGenerating(true, 50);
+      });
+
+      const state = usePosterBuilderStore.getState();
+      expect(state.isGenerating).toBe(true);
+      expect(state.generationProgress).toBe(50);
+    });
+
+    it('resets progress when setting isGenerating to false', () => {
+      act(() => {
+        usePosterBuilderStore.getState().setGenerating(true, 75);
+        usePosterBuilderStore.getState().setGenerating(false);
+      });
+
+      const state = usePosterBuilderStore.getState();
+      expect(state.isGenerating).toBe(false);
+      expect(state.generationProgress).toBe(0);
+    });
+  });
+
+  describe('toggleAdvancedOptions', () => {
+    it('toggles from false to true', () => {
+      act(() => {
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+      });
+
+      expect(usePosterBuilderStore.getState().showAdvancedOptions).toBe(true);
+    });
+
+    it('toggles from true to false', () => {
+      act(() => {
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+      });
+
+      expect(usePosterBuilderStore.getState().showAdvancedOptions).toBe(false);
+    });
+  });
+
+  describe('togglePreview', () => {
+    it('toggles from false to true', () => {
+      act(() => {
+        usePosterBuilderStore.getState().togglePreview();
+      });
+
+      expect(usePosterBuilderStore.getState().showPreview).toBe(true);
+    });
+
+    it('toggles from true to false', () => {
+      act(() => {
+        usePosterBuilderStore.getState().togglePreview();
+        usePosterBuilderStore.getState().togglePreview();
+      });
+
+      expect(usePosterBuilderStore.getState().showPreview).toBe(false);
+    });
+  });
+
+  describe('reset', () => {
+    it('resets all fields to initial values', () => {
+      // Set up state with various values
+      act(() => {
+        usePosterBuilderStore.getState().setField('athleteName', 'John Doe');
+        usePosterBuilderStore.getState().setField('beltRank', 'black');
+        usePosterBuilderStore.getState().setField('team', 'Team Alpha');
+        usePosterBuilderStore.getState().setTemplate('template-456');
+        usePosterBuilderStore.getState().setGenerating(true, 50);
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+      });
+
+      // Reset
+      act(() => {
+        usePosterBuilderStore.getState().reset();
+      });
+
+      // Verify all values are back to defaults
+      const state = usePosterBuilderStore.getState();
+      expect(state.athletePhoto).toBeNull();
+      expect(state.athleteName).toBe('');
+      expect(state.beltRank).toBe('white');
+      expect(state.team).toBe('');
+      expect(state.tournament).toBe('');
+      expect(state.date).toBe('');
+      expect(state.location).toBe('');
+      expect(state.selectedTemplateId).toBeNull();
+      expect(state.isGenerating).toBe(false);
+      expect(state.generationProgress).toBe(0);
+      expect(state.showAdvancedOptions).toBe(false);
+      expect(state.showPreview).toBe(false);
+    });
+  });
+});
