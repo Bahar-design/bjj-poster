@@ -1,6 +1,7 @@
 export {
   usePosterBuilderStore,
   type BeltRank,
+  type PosterFormField,
   type PosterBuilderActions,
   type PosterBuilderState,
   type PosterBuilderStore,

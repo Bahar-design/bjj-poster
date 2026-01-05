@@ -3,6 +3,15 @@ import { devtools, persist } from 'zustand/middleware';
 
 export type BeltRank = 'white' | 'blue' | 'purple' | 'brown' | 'black';
 
+/** Form fields that can be set via setField (excludes athletePhoto and UI state) */
+export type PosterFormField =
+  | 'athleteName'
+  | 'beltRank'
+  | 'team'
+  | 'tournament'
+  | 'date'
+  | 'location';
+
 export interface PosterBuilderState {
   // Form data
   athletePhoto: File | null;
@@ -23,10 +32,14 @@ export interface PosterBuilderState {
 
 export interface PosterBuilderActions {
   setPhoto: (file: File | null) => void;
-  setField: <K extends keyof PosterBuilderState>(
-    key: K,
-    value: PosterBuilderState[K]
-  ) => void;
+  /**
+   * Updates a form field value. Use dedicated methods for UI state:
+   * - setPhoto() for athletePhoto
+   * - setTemplate() for selectedTemplateId
+   * - setGenerating() for isGenerating/generationProgress
+   * - toggleAdvancedOptions()/togglePreview() for UI toggles
+   */
+  setField: <K extends PosterFormField>(key: K, value: PosterBuilderState[K]) => void;
   setTemplate: (templateId: string | null) => void;
   setGenerating: (isGenerating: boolean, progress?: number) => void;
   toggleAdvancedOptions: () => void;

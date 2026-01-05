@@ -139,18 +139,19 @@ describe('useUserStore', () => {
   });
 
   describe('tier transitions', () => {
-    it('transitions from free to pro correctly', () => {
+    it('preserves usage when same user upgrades from free to pro', () => {
       const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
 
-      // Start as free
+      // Start as free with some usage
       act(() => {
         useUserStore.getState().setUser(user, 'free');
         useUserStore.setState({ postersThisMonth: 2 });
       });
 
       expect(useUserStore.getState().postersLimit).toBe(3);
+      expect(useUserStore.getState().postersThisMonth).toBe(2);
 
-      // Upgrade to pro
+      // Upgrade to pro - same user, quota preserved
       act(() => {
         useUserStore.getState().setUser(user, 'pro');
       });
@@ -158,19 +159,19 @@ describe('useUserStore', () => {
       const state = useUserStore.getState();
       expect(state.subscriptionTier).toBe('pro');
       expect(state.postersLimit).toBe(20);
-      expect(state.postersThisMonth).toBe(0); // Reset on tier change
+      expect(state.postersThisMonth).toBe(2); // Preserved on same user tier change
     });
 
-    it('transitions from pro to premium correctly', () => {
+    it('preserves usage when same user upgrades from pro to premium', () => {
       const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
 
-      // Start as pro
+      // Start as pro with usage
       act(() => {
         useUserStore.getState().setUser(user, 'pro');
         useUserStore.setState({ postersThisMonth: 18 });
       });
 
-      // Upgrade to premium
+      // Upgrade to premium - same user
       act(() => {
         useUserStore.getState().setUser(user, 'premium');
       });
@@ -178,19 +179,20 @@ describe('useUserStore', () => {
       const state = useUserStore.getState();
       expect(state.subscriptionTier).toBe('premium');
       expect(state.postersLimit).toBe(-1);
+      expect(state.postersThisMonth).toBe(18); // Preserved
       expect(state.canCreatePoster()).toBe(true);
     });
 
-    it('downgrades from premium to free correctly', () => {
+    it('preserves usage when same user downgrades from premium to free', () => {
       const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
 
-      // Start as premium
+      // Start as premium with high usage
       act(() => {
         useUserStore.getState().setUser(user, 'premium');
         useUserStore.setState({ postersThisMonth: 50 });
       });
 
-      // Downgrade to free
+      // Downgrade to free - same user, usage preserved (may exceed new limit)
       act(() => {
         useUserStore.getState().setUser(user, 'free');
       });
@@ -198,7 +200,30 @@ describe('useUserStore', () => {
       const state = useUserStore.getState();
       expect(state.subscriptionTier).toBe('free');
       expect(state.postersLimit).toBe(3);
-      expect(state.postersThisMonth).toBe(0); // Reset on tier change
+      expect(state.postersThisMonth).toBe(50); // Preserved (user is over limit)
+      expect(state.canCreatePoster()).toBe(false); // Can't create more
+    });
+
+    it('resets usage when different user logs in', () => {
+      const user1 = { id: 'user-1', email: 'user1@example.com', name: 'User 1' };
+      const user2 = { id: 'user-2', email: 'user2@example.com', name: 'User 2' };
+
+      // User 1 with usage
+      act(() => {
+        useUserStore.getState().setUser(user1, 'pro');
+        useUserStore.setState({ postersThisMonth: 15 });
+      });
+
+      expect(useUserStore.getState().postersThisMonth).toBe(15);
+
+      // Different user logs in - quota resets
+      act(() => {
+        useUserStore.getState().setUser(user2, 'free');
+      });
+
+      const state = useUserStore.getState();
+      expect(state.user?.id).toBe('user-2');
+      expect(state.postersThisMonth).toBe(0); // Reset for new user
     });
   });
 

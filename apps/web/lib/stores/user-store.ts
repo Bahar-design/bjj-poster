@@ -17,9 +17,21 @@ export interface UserState {
 }
 
 export interface UserActions {
+  /**
+   * Sets the current user and their subscription tier.
+   * - If user ID changes (different user or login), resets postersThisMonth to 0
+   * - If same user changes tier (upgrade/downgrade), preserves postersThisMonth
+   */
   setUser: (user: User | null, tier?: SubscriptionTier) => void;
+  /** Clears user session and resets all state to defaults (for logout) */
   resetUser: () => void;
+  /** Returns true if user can create another poster based on subscription quota */
   canCreatePoster: () => boolean;
+  /**
+   * Increments the monthly poster usage count.
+   * IMPORTANT: Caller should check canCreatePoster() first to prevent exceeding quota.
+   * Server-side validation should also enforce limits.
+   */
   incrementUsage: () => void;
 }
 
@@ -46,13 +58,18 @@ export const useUserStore = create<UserStore>()(
     (set, get) => ({
       ...initialState,
 
-      setUser: (user, tier = 'free') =>
+      setUser: (user, tier = 'free') => {
+        const currentUser = get().user;
+        const isNewUser = !currentUser || !user || currentUser.id !== user.id;
+
         set({
           user,
           subscriptionTier: tier,
           postersLimit: TIER_LIMITS[tier],
-          postersThisMonth: 0, // Reset quota on user change
-        }),
+          // Only reset quota when user ID changes, not on tier change
+          ...(isNewUser && { postersThisMonth: 0 }),
+        });
+      },
 
       resetUser: () => set(initialState),
 
