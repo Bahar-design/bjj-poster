@@ -48,7 +48,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+interface SectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function Section({ title, children }: SectionProps): React.ReactElement {
   return (
     <section className="space-y-4">
       <h2 className="font-display text-2xl text-white">{title}</h2>
@@ -141,11 +146,14 @@ export default function ComponentsDemo() {
           <Section title="Input">
             <div className="space-y-4">
               <Input placeholder="Enter athlete name..." />
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Controlled input"
-              />
+              <div className="space-y-2">
+                <Input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Controlled input - type to see value below"
+                />
+                {inputValue && <p className="text-sm text-muted-foreground">Value: {inputValue}</p>}
+              </div>
               <Input disabled placeholder="Disabled input" />
             </div>
           </Section>
@@ -154,11 +162,16 @@ export default function ComponentsDemo() {
           <Section title="Textarea">
             <div className="space-y-4">
               <Textarea placeholder="Enter tournament description..." />
-              <Textarea
-                value={textareaValue}
-                onChange={(e) => setTextareaValue(e.target.value)}
-                placeholder="Controlled textarea"
-              />
+              <div className="space-y-2">
+                <Textarea
+                  value={textareaValue}
+                  onChange={(e) => setTextareaValue(e.target.value)}
+                  placeholder="Controlled textarea - type to see value below"
+                />
+                {textareaValue && (
+                  <p className="text-sm text-muted-foreground">Value: {textareaValue}</p>
+                )}
+              </div>
             </div>
           </Section>
 
