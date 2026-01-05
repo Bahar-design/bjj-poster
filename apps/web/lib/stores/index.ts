@@ -8,6 +8,7 @@ export {
 
 export {
   useUserStore,
+  UNLIMITED,
   type SubscriptionTier,
   type User,
   type UserActions,

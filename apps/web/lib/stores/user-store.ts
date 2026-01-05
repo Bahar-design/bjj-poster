@@ -18,37 +18,47 @@ export interface UserState {
 
 export interface UserActions {
   setUser: (user: User | null, tier?: SubscriptionTier) => void;
+  resetUser: () => void;
   canCreatePoster: () => boolean;
   incrementUsage: () => void;
 }
 
 export type UserStore = UserState & UserActions;
 
+/** Represents unlimited quota (-1 used for comparison) */
+export const UNLIMITED = -1;
+
 const TIER_LIMITS: Record<SubscriptionTier, number> = {
   free: 3,
   pro: 20,
-  premium: -1, // unlimited
+  premium: UNLIMITED,
+};
+
+const initialState: UserState = {
+  user: null,
+  subscriptionTier: 'free',
+  postersThisMonth: 0,
+  postersLimit: TIER_LIMITS.free,
 };
 
 export const useUserStore = create<UserStore>()(
   devtools(
     (set, get) => ({
-      user: null,
-      subscriptionTier: 'free',
-      postersThisMonth: 0,
-      postersLimit: TIER_LIMITS.free,
+      ...initialState,
 
       setUser: (user, tier = 'free') =>
         set({
           user,
           subscriptionTier: tier,
           postersLimit: TIER_LIMITS[tier],
+          postersThisMonth: 0, // Reset quota on user change
         }),
+
+      resetUser: () => set(initialState),
 
       canCreatePoster: () => {
         const { postersLimit, postersThisMonth } = get();
-        // -1 means unlimited
-        if (postersLimit === -1) return true;
+        if (postersLimit === UNLIMITED) return true;
         return postersThisMonth < postersLimit;
       },
 

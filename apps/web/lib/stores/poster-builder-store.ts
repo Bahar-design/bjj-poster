@@ -88,6 +88,9 @@ export const usePosterBuilderStore = create<PosterBuilderStore>()(
           location: state.location,
           selectedTemplateId: state.selectedTemplateId,
         }),
+        // skipHydration prevents SSR mismatch in Next.js.
+        // Call usePosterBuilderStore.persist.rehydrate() in a client component
+        // (e.g., useEffect in app/layout.tsx or a dedicated StoreHydration component)
         skipHydration: true,
       }
     ),

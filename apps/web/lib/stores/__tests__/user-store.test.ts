@@ -88,6 +88,118 @@ describe('useUserStore', () => {
       expect(state.subscriptionTier).toBe('premium');
       expect(state.postersLimit).toBe(-1);
     });
+
+    it('resets quota when setting new user', () => {
+      // Simulate existing user with usage
+      act(() => {
+        useUserStore.setState({ postersThisMonth: 5 });
+      });
+
+      const newUser = {
+        id: 'new-user',
+        email: 'new@example.com',
+        name: 'New User',
+      };
+
+      act(() => {
+        useUserStore.getState().setUser(newUser);
+      });
+
+      expect(useUserStore.getState().postersThisMonth).toBe(0);
+    });
+  });
+
+  describe('resetUser', () => {
+    it('clears user and resets all state to defaults', () => {
+      // Setup: user with usage
+      act(() => {
+        useUserStore.getState().setUser(
+          { id: 'user-123', email: 'test@example.com', name: 'Test' },
+          'pro'
+        );
+        useUserStore.setState({ postersThisMonth: 15 });
+      });
+
+      // Verify setup
+      expect(useUserStore.getState().user).not.toBeNull();
+      expect(useUserStore.getState().subscriptionTier).toBe('pro');
+
+      // Reset
+      act(() => {
+        useUserStore.getState().resetUser();
+      });
+
+      // Verify reset
+      const state = useUserStore.getState();
+      expect(state.user).toBeNull();
+      expect(state.subscriptionTier).toBe('free');
+      expect(state.postersThisMonth).toBe(0);
+      expect(state.postersLimit).toBe(3);
+    });
+  });
+
+  describe('tier transitions', () => {
+    it('transitions from free to pro correctly', () => {
+      const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
+
+      // Start as free
+      act(() => {
+        useUserStore.getState().setUser(user, 'free');
+        useUserStore.setState({ postersThisMonth: 2 });
+      });
+
+      expect(useUserStore.getState().postersLimit).toBe(3);
+
+      // Upgrade to pro
+      act(() => {
+        useUserStore.getState().setUser(user, 'pro');
+      });
+
+      const state = useUserStore.getState();
+      expect(state.subscriptionTier).toBe('pro');
+      expect(state.postersLimit).toBe(20);
+      expect(state.postersThisMonth).toBe(0); // Reset on tier change
+    });
+
+    it('transitions from pro to premium correctly', () => {
+      const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
+
+      // Start as pro
+      act(() => {
+        useUserStore.getState().setUser(user, 'pro');
+        useUserStore.setState({ postersThisMonth: 18 });
+      });
+
+      // Upgrade to premium
+      act(() => {
+        useUserStore.getState().setUser(user, 'premium');
+      });
+
+      const state = useUserStore.getState();
+      expect(state.subscriptionTier).toBe('premium');
+      expect(state.postersLimit).toBe(-1);
+      expect(state.canCreatePoster()).toBe(true);
+    });
+
+    it('downgrades from premium to free correctly', () => {
+      const user = { id: 'user-1', email: 'user@example.com', name: 'User' };
+
+      // Start as premium
+      act(() => {
+        useUserStore.getState().setUser(user, 'premium');
+        useUserStore.setState({ postersThisMonth: 50 });
+      });
+
+      // Downgrade to free
+      act(() => {
+        useUserStore.getState().setUser(user, 'free');
+      });
+
+      const state = useUserStore.getState();
+      expect(state.subscriptionTier).toBe('free');
+      expect(state.postersLimit).toBe(3);
+      expect(state.postersThisMonth).toBe(0); // Reset on tier change
+    });
   });
 
   describe('canCreatePoster', () => {

@@ -265,5 +265,51 @@ describe('usePosterBuilderStore', () => {
       expect(parsed.state.showAdvancedOptions).toBeUndefined();
       expect(parsed.state.showPreview).toBeUndefined();
     });
+
+    it('only persists partialized fields (form data, not UI state)', () => {
+      // Set all fields including UI state
+      act(() => {
+        usePosterBuilderStore.getState().setField('athleteName', 'Form User');
+        usePosterBuilderStore.getState().setField('beltRank', 'brown');
+        usePosterBuilderStore.getState().setField('team', 'Alliance');
+        usePosterBuilderStore.getState().setField('tournament', 'Pan Ams');
+        usePosterBuilderStore.getState().setField('date', '2026-03-15');
+        usePosterBuilderStore.getState().setField('location', 'Irvine, CA');
+        usePosterBuilderStore.getState().setTemplate('template-123');
+        usePosterBuilderStore.getState().setGenerating(true, 75);
+        usePosterBuilderStore.getState().toggleAdvancedOptions();
+      });
+
+      // Trigger persistence
+      usePosterBuilderStore.persist.rehydrate();
+
+      // Verify localStorage contains only partialized fields
+      const stored = localStorage.getItem('poster-builder-draft');
+      expect(stored).not.toBeNull();
+
+      const parsed = JSON.parse(stored!);
+      const persistedKeys = Object.keys(parsed.state);
+
+      // Should include form fields
+      expect(persistedKeys).toContain('athleteName');
+      expect(persistedKeys).toContain('beltRank');
+      expect(persistedKeys).toContain('team');
+      expect(persistedKeys).toContain('tournament');
+      expect(persistedKeys).toContain('date');
+      expect(persistedKeys).toContain('location');
+      expect(persistedKeys).toContain('selectedTemplateId');
+
+      // Should NOT include UI state or File
+      expect(persistedKeys).not.toContain('athletePhoto');
+      expect(persistedKeys).not.toContain('isGenerating');
+      expect(persistedKeys).not.toContain('generationProgress');
+      expect(persistedKeys).not.toContain('showAdvancedOptions');
+      expect(persistedKeys).not.toContain('showPreview');
+
+      // Verify values are correct
+      expect(parsed.state.athleteName).toBe('Form User');
+      expect(parsed.state.beltRank).toBe('brown');
+      expect(parsed.state.selectedTemplateId).toBe('template-123');
+    });
   });
 });
