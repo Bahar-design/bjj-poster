@@ -1,12 +1,14 @@
 /**
  * Custom error class for API errors with status code
+ * Includes optional cause for error chaining and debugging
  */
 export class ApiError extends Error {
   constructor(
     public status: number,
-    message: string
+    message: string,
+    options?: { cause?: unknown }
   ) {
-    super(message);
+    super(message, options);
     this.name = 'ApiError';
   }
 }
@@ -27,7 +29,11 @@ export async function apiFetch<T>(url: string): Promise<T> {
     if (error instanceof ApiError) {
       throw error;
     }
-    // Wrap network errors (CORS, timeout, no internet) in ApiError
-    throw new ApiError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Wrap network errors (CORS, timeout, no internet) in ApiError with cause for debugging
+    throw new ApiError(
+      0,
+      `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error }
+    );
   }
 }

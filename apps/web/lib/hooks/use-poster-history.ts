@@ -5,13 +5,16 @@ import type { Poster } from '../types/api';
 
 /**
  * Fetches poster history for a specific user
- * Query key: ['posters', userId] or ['posters', 'no-user'] when disabled
+ * Query key: ['posters', userId] when enabled, ['posters'] when disabled
  * Only fetches when userId is provided (enabled guard)
  */
 export function usePosterHistory(userId: string | undefined) {
   return useQuery<Poster[], Error>({
     queryKey: queryKeys.posters.byUser(userId),
-    queryFn: () => fetchPosterHistory(userId!),
+    queryFn: () => {
+      if (!userId) throw new Error('userId is required');
+      return fetchPosterHistory(userId);
+    },
     enabled: !!userId,
   });
 }
