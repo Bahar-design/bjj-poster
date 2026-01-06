@@ -56,4 +56,31 @@ describe('Pricing Page', () => {
       expect(screen.getByRole('radiogroup', { name: /billing period/i })).toBeInTheDocument();
     });
   });
+
+  describe('Pricing Cards', () => {
+    it('renders three pricing tiers', () => {
+      render(<PricingPage />);
+      expect(screen.getByRole('heading', { level: 2, name: /free/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 2, name: /pro/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 2, name: /premium/i })).toBeInTheDocument();
+    });
+
+    it('shows Most Popular badge on Pro tier', () => {
+      render(<PricingPage />);
+      expect(screen.getByText(/most popular/i)).toBeInTheDocument();
+    });
+
+    it('renders monthly prices by default', () => {
+      render(<PricingPage />);
+      expect(screen.getByText('$0')).toBeInTheDocument();
+      expect(screen.getByText('$9.99')).toBeInTheDocument();
+      expect(screen.getByText('$29.99')).toBeInTheDocument();
+    });
+
+    it('shows /month text for all tiers', () => {
+      render(<PricingPage />);
+      const monthTexts = screen.getAllByText(/\/month/i);
+      expect(monthTexts.length).toBe(3);
+    });
+  });
 });
