@@ -8,6 +8,11 @@ export const queryKeys = {
   },
   posters: {
     all: ['posters'] as const,
-    byUser: (userId: string) => [...queryKeys.posters.all, userId] as const,
+    /**
+     * Query key for user-specific poster history
+     * Uses 'no-user' sentinel value when userId is undefined to prevent cache collisions
+     */
+    byUser: (userId: string | undefined) =>
+      [...queryKeys.posters.all, userId ?? 'no-user'] as const,
   },
 } as const;
