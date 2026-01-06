@@ -39,7 +39,7 @@ describe('PasswordInput', () => {
   });
 
   it('forwards ref to input element', () => {
-    const ref = { current: null } as React.RefObject<HTMLInputElement | null>;
+    const ref = { current: null as HTMLInputElement | null };
     render(<PasswordInput ref={ref} />);
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });

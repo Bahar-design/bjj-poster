@@ -18,7 +18,7 @@ describe('Auth Validation Schemas', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Invalid email address');
+        expect(result.error.issues[0]?.message).toBe('Invalid email address');
       }
     });
 
@@ -37,7 +37,7 @@ describe('Auth Validation Schemas', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Password is required');
+        expect(result.error.issues[0]?.message).toBe('Password is required');
       }
     });
   });
@@ -58,7 +58,7 @@ describe('Auth Validation Schemas', () => {
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe(
+        expect(result.error.issues[0]?.message).toBe(
           'Password must be at least 8 characters'
         );
       }
