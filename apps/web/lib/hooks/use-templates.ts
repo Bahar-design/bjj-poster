@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchTemplates } from '../api/templates';
+import { queryKeys } from '../api/query-keys';
 import type { Template } from '../types/api';
 
 /**
@@ -8,7 +9,7 @@ import type { Template } from '../types/api';
  */
 export function useTemplates() {
   return useQuery<Template[], Error>({
-    queryKey: ['templates'],
+    queryKey: queryKeys.templates.all,
     queryFn: fetchTemplates,
   });
 }

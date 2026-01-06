@@ -1,6 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createWrapper } from './test-utils';
+import { fetchPosterHistory } from '../../api/posters';
+import { usePosterHistory } from '../use-poster-history';
 
 vi.mock('../../api/posters', () => ({
   fetchPosterHistory: vi.fn(),
@@ -11,33 +13,29 @@ describe('usePosterHistory', () => {
     vi.resetAllMocks();
   });
 
-  it('returns loading state when userId provided', async () => {
-    const { fetchPosterHistory } = await import('../../api/posters');
+  it('returns loading state when userId provided', () => {
     vi.mocked(fetchPosterHistory).mockImplementation(
       () => new Promise(() => {}) // Never resolves
     );
-
-    const { usePosterHistory } = await import('../use-poster-history');
 
     const { result } = renderHook(() => usePosterHistory('user-001'), {
       wrapper: createWrapper(),
     });
 
     expect(result.current.isLoading).toBe(true);
+    expect(result.current.isFetching).toBe(true);
     expect(result.current.data).toBeUndefined();
   });
 
-  it('does not fetch when userId is undefined', async () => {
-    const { fetchPosterHistory } = await import('../../api/posters');
-
-    const { usePosterHistory } = await import('../use-poster-history');
-
+  it('does not fetch when userId is undefined', () => {
     const { result } = renderHook(() => usePosterHistory(undefined), {
       wrapper: createWrapper(),
     });
 
     expect(result.current.isLoading).toBe(false);
+    expect(result.current.isFetching).toBe(false);
     expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.data).toBeUndefined();
     expect(fetchPosterHistory).not.toHaveBeenCalled();
   });
 
@@ -51,10 +49,7 @@ describe('usePosterHistory', () => {
         title: 'Test Poster',
       },
     ];
-    const { fetchPosterHistory } = await import('../../api/posters');
     vi.mocked(fetchPosterHistory).mockResolvedValue(mockPosters);
-
-    const { usePosterHistory } = await import('../use-poster-history');
 
     const { result } = renderHook(() => usePosterHistory('user-001'), {
       wrapper: createWrapper(),
@@ -65,14 +60,12 @@ describe('usePosterHistory', () => {
     });
 
     expect(result.current.data).toEqual(mockPosters);
+    expect(result.current.isFetching).toBe(false);
     expect(fetchPosterHistory).toHaveBeenCalledWith('user-001');
   });
 
   it('returns error state on failure', async () => {
-    const { fetchPosterHistory } = await import('../../api/posters');
     vi.mocked(fetchPosterHistory).mockRejectedValue(new Error('Network error'));
-
-    const { usePosterHistory } = await import('../use-poster-history');
 
     const { result } = renderHook(() => usePosterHistory('user-001'), {
       wrapper: createWrapper(),
@@ -83,5 +76,6 @@ describe('usePosterHistory', () => {
     });
 
     expect(result.current.error?.message).toBe('Network error');
+    expect(result.current.isFetching).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createWrapper } from './test-utils';
+import { fetchTemplates } from '../../api/templates';
+import { useTemplates } from '../use-templates';
 
 vi.mock('../../api/templates', () => ({
   fetchTemplates: vi.fn(),
@@ -11,19 +13,17 @@ describe('useTemplates', () => {
     vi.resetAllMocks();
   });
 
-  it('returns loading state initially', async () => {
-    const { fetchTemplates } = await import('../../api/templates');
+  it('returns loading state initially', () => {
     vi.mocked(fetchTemplates).mockImplementation(
       () => new Promise(() => {}) // Never resolves
     );
-
-    const { useTemplates } = await import('../use-templates');
 
     const { result } = renderHook(() => useTemplates(), {
       wrapper: createWrapper(),
     });
 
     expect(result.current.isLoading).toBe(true);
+    expect(result.current.isFetching).toBe(true);
     expect(result.current.data).toBeUndefined();
   });
 
@@ -31,10 +31,7 @@ describe('useTemplates', () => {
     const mockTemplates = [
       { id: '1', name: 'Test', category: 'test', thumbnailUrl: '/test.png' },
     ];
-    const { fetchTemplates } = await import('../../api/templates');
     vi.mocked(fetchTemplates).mockResolvedValue(mockTemplates);
-
-    const { useTemplates } = await import('../use-templates');
 
     const { result } = renderHook(() => useTemplates(), {
       wrapper: createWrapper(),
@@ -45,13 +42,11 @@ describe('useTemplates', () => {
     });
 
     expect(result.current.data).toEqual(mockTemplates);
+    expect(result.current.isFetching).toBe(false);
   });
 
   it('returns error state on failure', async () => {
-    const { fetchTemplates } = await import('../../api/templates');
     vi.mocked(fetchTemplates).mockRejectedValue(new Error('Network error'));
-
-    const { useTemplates } = await import('../use-templates');
 
     const { result } = renderHook(() => useTemplates(), {
       wrapper: createWrapper(),
@@ -62,5 +57,6 @@ describe('useTemplates', () => {
     });
 
     expect(result.current.error?.message).toBe('Network error');
+    expect(result.current.isFetching).toBe(false);
   });
 });

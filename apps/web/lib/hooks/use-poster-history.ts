@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchPosterHistory } from '../api/posters';
+import { queryKeys } from '../api/query-keys';
 import type { Poster } from '../types/api';
 
 /**
@@ -9,8 +10,13 @@ import type { Poster } from '../types/api';
  */
 export function usePosterHistory(userId: string | undefined) {
   return useQuery<Poster[], Error>({
-    queryKey: ['posters', userId],
-    queryFn: () => fetchPosterHistory(userId!),
+    queryKey: queryKeys.posters.byUser(userId ?? ''),
+    queryFn: () => {
+      if (!userId) {
+        throw new Error('userId is required');
+      }
+      return fetchPosterHistory(userId);
+    },
     enabled: !!userId,
   });
 }

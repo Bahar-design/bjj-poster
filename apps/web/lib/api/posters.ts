@@ -22,8 +22,13 @@ const MOCK_POSTERS: Record<string, Poster[]> = {
 /**
  * Fetches poster history for a specific user
  * TODO: Replace with real API call when backend is ready
+ * @throws {Error} If userId is invalid
  */
 export async function fetchPosterHistory(userId: string): Promise<Poster[]> {
+  if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+    throw new Error('Invalid userId provided');
+  }
+
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
   return MOCK_POSTERS[userId] ?? [];
