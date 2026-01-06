@@ -230,7 +230,9 @@ export default function PricingPage() {
 
         <div className="mt-16 grid gap-8 lg:grid-cols-3 lg:items-start">
           {pricingTiers.map((tier) => (
-            <PricingCard key={tier.name} tier={tier} billingPeriod={billingPeriod} />
+            <div key={tier.name} className={cn(tier.popular && 'order-first lg:order-none')}>
+              <PricingCard tier={tier} billingPeriod={billingPeriod} />
+            </div>
           ))}
         </div>
       </div>
