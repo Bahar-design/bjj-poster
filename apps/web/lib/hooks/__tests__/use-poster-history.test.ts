@@ -78,4 +78,41 @@ describe('usePosterHistory', () => {
     expect(result.current.error?.message).toBe('Network error');
     expect(result.current.isFetching).toBe(false);
   });
+
+  it('fetches when userId transitions from undefined to valid (simulating login)', async () => {
+    const mockPosters = [
+      {
+        id: 'p1',
+        templateId: 't1',
+        createdAt: '2026-01-01',
+        thumbnailUrl: '/p1.png',
+        title: 'Test Poster',
+      },
+    ];
+    vi.mocked(fetchPosterHistory).mockResolvedValue(mockPosters);
+
+    // Start with undefined userId (logged out)
+    const { result, rerender } = renderHook(
+      ({ userId }: { userId: string | undefined }) => usePosterHistory(userId),
+      {
+        wrapper: createWrapper(),
+        initialProps: { userId: undefined as string | undefined },
+      }
+    );
+
+    // Should not fetch when disabled
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(fetchPosterHistory).not.toHaveBeenCalled();
+
+    // Simulate user login - userId becomes available
+    rerender({ userId: 'user-001' });
+
+    // Should now fetch
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(result.current.data).toEqual(mockPosters);
+    expect(fetchPosterHistory).toHaveBeenCalledWith('user-001');
+  });
 });

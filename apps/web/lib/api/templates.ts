@@ -29,7 +29,8 @@ const MOCK_TEMPLATES: Template[] = [
 
 /**
  * Fetches all available templates
- * TODO: Replace with real API call when backend is ready
+ * TODO: Replace with apiFetch(`${API_BASE_URL}/templates`) when backend is ready
+ * @see {@link apiFetch} for error handling
  */
 export async function fetchTemplates(): Promise<Template[]> {
   // Simulate network delay

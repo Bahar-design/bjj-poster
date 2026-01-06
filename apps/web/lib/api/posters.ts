@@ -21,7 +21,8 @@ const MOCK_POSTERS: Record<string, Poster[]> = {
 
 /**
  * Fetches poster history for a specific user
- * TODO: Replace with real API call when backend is ready
+ * TODO: Replace with apiFetch(`${API_BASE_URL}/users/${userId}/posters`) when backend is ready
+ * @see {@link apiFetch} for error handling
  * Note: Backend will handle validation - mock assumes valid userId from hook guard
  */
 export async function fetchPosterHistory(userId: string): Promise<Poster[]> {
