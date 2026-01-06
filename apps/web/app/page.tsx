@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-primary-900">
       {/* Hero Section */}
-      <section className="relative min-h-screen px-6 py-20 lg:px-8">
+      <section aria-label="Hero" className="relative min-h-screen px-6 py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid min-h-[80vh] items-center gap-12 lg:grid-cols-2">
             {/* Hero Content */}
@@ -42,6 +42,8 @@ export default function Home() {
                     src="/images/examples/poster-3.svg"
                     alt="Example BJJ tournament poster with purple theme"
                     fill
+                    sizes="(max-width: 640px) 240px, 300px"
+                    priority
                     className="object-cover"
                   />
                 </div>
@@ -52,8 +54,9 @@ export default function Home() {
                     src="/images/examples/poster-1.svg"
                     alt="Example BJJ tournament poster with blue theme"
                     fill
-                    className="object-cover"
+                    sizes="(max-width: 640px) 240px, 300px"
                     priority
+                    className="object-cover"
                   />
                 </div>
 
@@ -63,6 +66,8 @@ export default function Home() {
                     src="/images/examples/poster-2.svg"
                     alt="Example BJJ tournament poster with gold theme"
                     fill
+                    sizes="(max-width: 640px) 240px, 300px"
+                    priority
                     className="object-cover"
                   />
                 </div>
@@ -73,9 +78,12 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section className="bg-primary-800 px-6 py-20 lg:px-8">
+      <section aria-labelledby="how-it-works-heading" className="bg-primary-800 px-6 py-20 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <h2 className="mb-16 text-center font-display text-3xl text-white sm:text-4xl">
+          <h2
+            id="how-it-works-heading"
+            className="mb-16 text-center font-display text-3xl text-white sm:text-4xl"
+          >
             How It Works
           </h2>
 
@@ -86,7 +94,10 @@ export default function Home() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent-gold bg-primary-700">
                   <Camera className="h-10 w-10 text-accent-gold" aria-hidden="true" />
                 </div>
-                <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white">
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white"
+                >
                   1
                 </span>
               </div>
@@ -102,7 +113,10 @@ export default function Home() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent-gold bg-primary-700">
                   <Palette className="h-10 w-10 text-accent-gold" aria-hidden="true" />
                 </div>
-                <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white">
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white"
+                >
                   2
                 </span>
               </div>
@@ -118,7 +132,10 @@ export default function Home() {
                 <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent-gold bg-primary-700">
                   <Download className="h-10 w-10 text-accent-gold" aria-hidden="true" />
                 </div>
-                <span className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white">
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary-500 font-body text-sm font-bold text-white"
+                >
                   3
                 </span>
               </div>
@@ -132,9 +149,12 @@ export default function Home() {
       </section>
 
       {/* Footer CTA Section */}
-      <section className="bg-primary-900 px-6 py-20 lg:px-8">
+      <section aria-labelledby="cta-heading" className="bg-primary-900 px-6 py-20 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-8 font-display text-3xl text-white sm:text-4xl">
+          <h2
+            id="cta-heading"
+            className="mb-8 font-display text-3xl text-white sm:text-4xl"
+          >
             Ready to create your first poster?
           </h2>
           <Button asChild size="lg" className="text-base">
