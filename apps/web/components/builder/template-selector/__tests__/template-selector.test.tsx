@@ -146,4 +146,51 @@ describe('TemplateSelector', () => {
     await userEvent.click(browseButton);
     expect(screen.queryByText('Kids')).not.toBeInTheDocument();
   });
+
+  it('filters templates by category when filter selected', async () => {
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: createWrapper() });
+
+    // Expand browse all
+    await userEvent.click(screen.getByRole('button', { name: /browse all templates/i }));
+
+    // All templates visible
+    expect(screen.getByText('Kids')).toBeInTheDocument();
+    expect(screen.getAllByText('Classic').length).toBeGreaterThan(0);
+
+    // Click tournament filter
+    await userEvent.click(screen.getByRole('button', { name: /tournament/i }));
+
+    // Only tournament templates visible in browse all
+    expect(screen.queryByText('Kids')).not.toBeInTheDocument();
+  });
+
+  it('shows all templates when All filter selected', async () => {
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: createWrapper() });
+
+    // Expand and filter
+    await userEvent.click(screen.getByRole('button', { name: /browse all templates/i }));
+    await userEvent.click(screen.getByRole('button', { name: /tournament/i }));
+
+    // Click All to reset
+    await userEvent.click(screen.getByRole('button', { name: /^all$/i }));
+
+    // All templates visible again
+    expect(screen.getByText('Kids')).toBeInTheDocument();
+  });
 });

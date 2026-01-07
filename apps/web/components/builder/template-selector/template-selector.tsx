@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTemplates } from '@/lib/hooks';
 import { usePosterBuilderStore } from '@/lib/stores/poster-builder-store';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { TemplateSkeleton } from './template-skeleton';
 import { TemplateCard } from './template-card';
@@ -11,6 +12,7 @@ import { TemplateGrid } from './template-grid';
 
 export function TemplateSelector(): JSX.Element {
   const [isBrowseAllOpen, setIsBrowseAllOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { data: templates, isLoading, isError, refetch } = useTemplates();
   const { selectedTemplateId, setTemplate } = usePosterBuilderStore();
 
@@ -50,6 +52,10 @@ export function TemplateSelector(): JSX.Element {
   }
 
   const recommendedTemplates = templates.slice(0, 3);
+  const categories = [...new Set(templates.map((t) => t.category))];
+  const filteredTemplates = selectedCategory
+    ? templates.filter((t) => t.category === selectedCategory)
+    : templates;
 
   return (
     <div className="space-y-6">
@@ -84,9 +90,38 @@ export function TemplateSelector(): JSX.Element {
         </button>
 
         {isBrowseAllOpen && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                className={cn(
+                  'rounded-full px-3 py-1 text-sm font-medium transition-colors',
+                  selectedCategory === null
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                )}
+              >
+                All
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setSelectedCategory(category)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-sm font-medium capitalize transition-colors',
+                    selectedCategory === category
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  )}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
             <TemplateGrid>
-              {templates.map((template) => (
+              {filteredTemplates.map((template) => (
                 <TemplateCard
                   key={template.id}
                   template={template}
