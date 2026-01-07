@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TournamentInfoFields } from '../tournament-info-fields';
+import { usePosterBuilderStore } from '@/lib/stores';
 
 // Mock the store
 const createMockState = (overrides = {}) => ({
@@ -37,6 +38,11 @@ vi.mock('@/lib/stores', () => ({
 describe('TournamentInfoFields', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock to default state
+    vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+      const state = createMockState();
+      return selector ? selector(state) : state;
+    });
   });
 
   describe('rendering', () => {
@@ -99,6 +105,76 @@ describe('TournamentInfoFields', () => {
       await user.tab();
 
       expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+  });
+
+  describe('collapsible section', () => {
+    it('renders "Add more details" button when collapsed', () => {
+      render(<TournamentInfoFields />);
+      expect(screen.getByRole('button', { name: /add more details/i })).toBeInTheDocument();
+    });
+
+    it('hides date and location fields by default', () => {
+      render(<TournamentInfoFields />);
+      expect(screen.queryByLabelText(/date/i)).not.toBeVisible();
+      expect(screen.queryByLabelText(/location/i)).not.toBeVisible();
+    });
+
+    it('calls toggleAdvancedOptions when button clicked', async () => {
+      const mockToggle = vi.fn();
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ toggleAdvancedOptions: mockToggle });
+        return selector ? selector(state) : state;
+      });
+
+      const user = userEvent.setup();
+      render(<TournamentInfoFields />);
+
+      await user.click(screen.getByRole('button', { name: /add more details/i }));
+
+      expect(mockToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows "Hide details" button when expanded', () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ showAdvancedOptions: true });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      expect(screen.getByRole('button', { name: /hide details/i })).toBeInTheDocument();
+    });
+
+    it('shows date and location fields when expanded', () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ showAdvancedOptions: true });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      expect(screen.getByLabelText(/date/i)).toBeVisible();
+      expect(screen.getByLabelText(/location/i)).toBeVisible();
+    });
+
+    it('sets aria-expanded on toggle button', () => {
+      render(<TournamentInfoFields />);
+
+      const button = screen.getByRole('button', { name: /add more details/i });
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('sets aria-expanded true when expanded', () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ showAdvancedOptions: true });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      const button = screen.getByRole('button', { name: /hide details/i });
+      expect(button).toHaveAttribute('aria-expanded', 'true');
     });
   });
 });
