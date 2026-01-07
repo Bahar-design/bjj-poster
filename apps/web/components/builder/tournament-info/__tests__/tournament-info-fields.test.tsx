@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TournamentInfoFields } from '../tournament-info-fields';
+import { TournamentInfoFields, DEBOUNCE_MS } from '../tournament-info-fields';
 import { usePosterBuilderStore } from '@/lib/stores';
 
 // Mock the store
@@ -175,6 +175,131 @@ describe('TournamentInfoFields', () => {
 
       const button = screen.getByRole('button', { name: /hide details/i });
       expect(button).toHaveAttribute('aria-expanded', 'true');
+    });
+  });
+
+  describe('store integration', () => {
+    it('initializes fields from store values', () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({
+          tournament: 'IBJJF Worlds',
+          date: '2026-06-15',
+          location: 'Las Vegas',
+          showAdvancedOptions: true,
+        });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      expect(screen.getByLabelText(/tournament name/i)).toHaveValue('IBJJF Worlds');
+      expect(screen.getByLabelText(/date/i)).toHaveValue('2026-06-15');
+      expect(screen.getByLabelText(/location/i)).toHaveValue('Las Vegas');
+    });
+
+    it('debounces tournament name sync to store', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ setField: mockSetField });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/tournament name/i);
+      await user.type(input, 'IBJJF');
+
+      expect(mockSetField).not.toHaveBeenCalled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(DEBOUNCE_MS);
+      });
+
+      expect(mockSetField).toHaveBeenCalledWith('tournament', 'IBJJF');
+
+      vi.useRealTimers();
+    });
+
+    it('syncs date to store immediately on change', async () => {
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({
+          setField: mockSetField,
+          showAdvancedOptions: true,
+        });
+        return selector ? selector(state) : state;
+      });
+
+      const user = userEvent.setup();
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/date/i);
+      await user.type(input, '2026-06-15');
+
+      expect(mockSetField).toHaveBeenCalledWith('date', '2026-06-15');
+    });
+
+    it('debounces location sync to store', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({
+          setField: mockSetField,
+          showAdvancedOptions: true,
+        });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/location/i);
+      await user.type(input, 'Vegas');
+
+      expect(mockSetField).not.toHaveBeenCalledWith('location', expect.any(String));
+
+      await act(async () => {
+        vi.advanceTimersByTime(DEBOUNCE_MS);
+      });
+
+      expect(mockSetField).toHaveBeenCalledWith('location', 'Vegas');
+
+      vi.useRealTimers();
+    });
+
+    it('does not sync invalid tournament name to store', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ setField: mockSetField });
+        return selector ? selector(state) : state;
+      });
+
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/tournament name/i);
+      await user.type(input, 'A'.repeat(101));
+
+      await act(async () => {
+        vi.advanceTimersByTime(DEBOUNCE_MS);
+      });
+
+      expect(mockSetField).not.toHaveBeenCalledWith('tournament', expect.any(String));
+
+      vi.useRealTimers();
     });
   });
 });
