@@ -39,9 +39,33 @@ export function TemplateSelector(): JSX.Element {
     );
   }
 
+  if (!templates || templates.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-gray-400">No templates available</p>
+      </div>
+    );
+  }
+
+  const recommendedTemplates = templates.slice(0, 3);
+
   return (
     <div className="space-y-6">
-      <p>Templates loaded</p>
+      <section>
+        <h3 className="mb-4 text-lg font-semibold text-white">
+          Recommended for you
+        </h3>
+        <TemplateGrid>
+          {recommendedTemplates.map((template) => (
+            <TemplateCard
+              key={template.id}
+              template={template}
+              isSelected={selectedTemplateId === template.id}
+              onSelect={setTemplate}
+            />
+          ))}
+        </TemplateGrid>
+      </section>
     </div>
   );
 }

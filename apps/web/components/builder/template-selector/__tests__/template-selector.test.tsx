@@ -17,6 +17,13 @@ vi.mock('@/lib/stores/poster-builder-store', () => ({
 
 import { useTemplates } from '@/lib/hooks';
 
+const mockTemplates = [
+  { id: 'tpl-001', name: 'Classic', category: 'tournament', thumbnailUrl: '/1.png' },
+  { id: 'tpl-002', name: 'Modern', category: 'tournament', thumbnailUrl: '/2.png' },
+  { id: 'tpl-003', name: 'Bold', category: 'competition', thumbnailUrl: '/3.png' },
+  { id: 'tpl-004', name: 'Kids', category: 'kids', thumbnailUrl: '/4.png' },
+];
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -75,5 +82,22 @@ describe('TemplateSelector', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
     expect(refetch).toHaveBeenCalled();
+  });
+
+  it('displays recommended section with first 3 templates', () => {
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: createWrapper() });
+
+    expect(screen.getByText('Recommended for you')).toBeInTheDocument();
+    expect(screen.getByText('Classic')).toBeInTheDocument();
+    expect(screen.getByText('Modern')).toBeInTheDocument();
+    expect(screen.getByText('Bold')).toBeInTheDocument();
   });
 });
