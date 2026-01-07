@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
-import { Check } from 'lucide-react';
+import { Check, ImageOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Template } from '@/lib/types/api';
 
@@ -9,13 +10,18 @@ interface TemplateCardProps {
   template: Template;
   isSelected: boolean;
   onSelect: (templateId: string) => void;
+  /** Use priority loading for above-the-fold images (recommended section) */
+  priority?: boolean;
 }
 
 export function TemplateCard({
   template,
   isSelected,
   onSelect,
+  priority = false,
 }: TemplateCardProps): JSX.Element {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <button
       type="button"
@@ -28,12 +34,20 @@ export function TemplateCard({
       )}
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-lg bg-gray-700">
-        <Image
-          src={template.thumbnailUrl}
-          alt={template.name}
-          fill
-          className="object-cover"
-        />
+        {imageError ? (
+          <div className="flex h-full w-full items-center justify-center bg-gray-600">
+            <ImageOff className="h-8 w-8 text-gray-400" />
+          </div>
+        ) : (
+          <Image
+            src={template.thumbnailUrl}
+            alt={template.name}
+            fill
+            className="object-cover"
+            priority={priority}
+            onError={() => setImageError(true)}
+          />
+        )}
         {isSelected && (
           <div
             data-testid="checkmark-icon"

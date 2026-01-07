@@ -236,4 +236,53 @@ describe('TemplateSelector', () => {
 
     expect(screen.getByTestId('checkmark-icon')).toBeInTheDocument();
   });
+
+  it('has proper ARIA attributes on browse all toggle', async () => {
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: TestWrapper });
+
+    const browseButton = screen.getByRole('button', { name: /browse all templates/i });
+
+    // Initially collapsed
+    expect(browseButton).toHaveAttribute('aria-expanded', 'false');
+    expect(browseButton).toHaveAttribute('aria-controls', 'browse-all-section');
+
+    // Expand
+    await userEvent.click(browseButton);
+    expect(browseButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('has proper ARIA attributes on category filters', async () => {
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: TestWrapper });
+
+    // Expand browse all
+    await userEvent.click(screen.getByRole('button', { name: /browse all templates/i }));
+
+    // All button should be pressed by default
+    const allButton = screen.getByRole('button', { name: /^all$/i });
+    expect(allButton).toHaveAttribute('aria-pressed', 'true');
+
+    // Click tournament filter
+    const tournamentButton = screen.getByRole('button', { name: /tournament/i });
+    await userEvent.click(tournamentButton);
+
+    // Tournament should now be pressed, All should not
+    expect(tournamentButton).toHaveAttribute('aria-pressed', 'true');
+    expect(allButton).toHaveAttribute('aria-pressed', 'false');
+  });
 });

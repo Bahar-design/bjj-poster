@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTemplates } from '@/lib/hooks';
 import { usePosterBuilderStore } from '@/lib/stores/poster-builder-store';
@@ -15,6 +15,25 @@ export function TemplateSelector(): JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { data: templates, isLoading, isError, refetch } = useTemplates();
   const { selectedTemplateId, setTemplate } = usePosterBuilderStore();
+
+  // Memoize expensive computations to prevent unnecessary recalculations
+  const recommendedTemplates = useMemo(
+    () => templates?.slice(0, 3) ?? [],
+    [templates]
+  );
+
+  const categories = useMemo(
+    () => (templates ? [...new Set(templates.map((t) => t.category))] : []),
+    [templates]
+  );
+
+  const filteredTemplates = useMemo(
+    () =>
+      selectedCategory
+        ? templates?.filter((t) => t.category === selectedCategory) ?? []
+        : templates ?? [],
+    [templates, selectedCategory]
+  );
 
   if (isLoading) {
     return (
@@ -51,16 +70,10 @@ export function TemplateSelector(): JSX.Element {
     );
   }
 
-  const recommendedTemplates = templates.slice(0, 3);
-  const categories = [...new Set(templates.map((t) => t.category))];
-  const filteredTemplates = selectedCategory
-    ? templates.filter((t) => t.category === selectedCategory)
-    : templates;
-
   return (
     <div className="space-y-6">
-      <section>
-        <h3 className="mb-4 text-lg font-semibold text-white">
+      <section aria-labelledby="recommended-heading">
+        <h3 id="recommended-heading" className="mb-4 text-lg font-semibold text-white">
           Recommended for you
         </h3>
         <TemplateGrid>
@@ -70,31 +83,38 @@ export function TemplateSelector(): JSX.Element {
               template={template}
               isSelected={selectedTemplateId === template.id}
               onSelect={setTemplate}
+              priority
             />
           ))}
         </TemplateGrid>
       </section>
 
-      <section>
+      <section aria-labelledby="browse-all-heading">
+        <h3 id="browse-all-heading" className="sr-only">
+          Browse all templates
+        </h3>
         <button
           type="button"
           onClick={() => setIsBrowseAllOpen(!isBrowseAllOpen)}
+          aria-expanded={isBrowseAllOpen}
+          aria-controls="browse-all-section"
           className="flex w-full items-center justify-between rounded-lg bg-gray-800 px-4 py-3 text-left text-white transition-colors hover:bg-gray-700"
         >
           <span className="font-medium">Browse all templates</span>
           {isBrowseAllOpen ? (
-            <ChevronUp className="h-5 w-5" />
+            <ChevronUp className="h-5 w-5" aria-hidden="true" />
           ) : (
-            <ChevronDown className="h-5 w-5" />
+            <ChevronDown className="h-5 w-5" aria-hidden="true" />
           )}
         </button>
 
         {isBrowseAllOpen && (
-          <div className="mt-4 space-y-4">
-            <div className="flex flex-wrap gap-2">
+          <div id="browse-all-section" className="mt-4 space-y-4">
+            <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setSelectedCategory(null)}
+                aria-pressed={selectedCategory === null}
                 className={cn(
                   'rounded-full px-3 py-1 text-sm font-medium transition-colors',
                   selectedCategory === null
@@ -109,6 +129,7 @@ export function TemplateSelector(): JSX.Element {
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
+                  aria-pressed={selectedCategory === category}
                   className={cn(
                     'rounded-full px-3 py-1 text-sm font-medium capitalize transition-colors',
                     selectedCategory === category

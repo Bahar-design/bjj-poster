@@ -77,4 +77,18 @@ describe('TemplateCard', () => {
 
     expect(screen.queryByTestId('checkmark-icon')).not.toBeInTheDocument();
   });
+
+  it('accepts priority prop for above-the-fold images', () => {
+    render(
+      <TemplateCard
+        template={mockTemplate}
+        isSelected={false}
+        onSelect={vi.fn()}
+        priority
+      />
+    );
+
+    // The image should render (priority is passed internally to Next Image)
+    expect(screen.getByRole('img', { name: 'Classic Tournament' })).toBeInTheDocument();
+  });
 });
