@@ -191,6 +191,67 @@ describe('AthleteInfoFields', () => {
 
       vi.useRealTimers();
     });
+
+    it('does not sync invalid data to store', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ setField: mockSetField });
+        return selector ? selector(state) : state;
+      });
+
+      render(<AthleteInfoFields />);
+
+      // Type 51 characters (exceeds max length)
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.type(input, 'A'.repeat(51));
+
+      // Wait for debounce
+      await act(async () => {
+        vi.advanceTimersByTime(300);
+      });
+
+      // setField should NOT be called with invalid data
+      expect(mockSetField).not.toHaveBeenCalledWith('athleteName', expect.any(String));
+
+      vi.useRealTimers();
+    });
+
+    it('cleans up debounce timers on unmount', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({
+        advanceTimers: (delay) => vi.advanceTimersByTime(delay),
+      });
+      const mockSetField = vi.fn();
+
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ setField: mockSetField });
+        return selector ? selector(state) : state;
+      });
+
+      const { unmount } = render(<AthleteInfoFields />);
+
+      // Type something
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.type(input, 'Jane');
+
+      // Unmount before debounce completes
+      unmount();
+
+      // Advance timers past debounce delay
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+
+      // setField should NOT be called after unmount (timer was cleaned up)
+      expect(mockSetField).not.toHaveBeenCalled();
+
+      vi.useRealTimers();
+    });
   });
 
   describe('validation', () => {

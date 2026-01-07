@@ -12,7 +12,11 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { usePosterBuilderStore, type BeltRank } from '@/lib/stores';
-import { athleteInfoSchema } from '@/lib/validations';
+import {
+  athleteInfoSchema,
+  MAX_NAME_LENGTH,
+  MAX_TEAM_LENGTH,
+} from '@/lib/validations';
 
 /** Type for field-specific errors */
 interface FieldErrors {
@@ -49,41 +53,6 @@ export function AthleteInfoFields(): React.ReactElement {
   // Validation state
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // Sync local state when store changes (e.g., rehydration from localStorage)
-  useEffect(() => {
-    setAthleteName(storeAthleteName);
-  }, [storeAthleteName]);
-
-  useEffect(() => {
-    setTeam(storeTeam);
-  }, [storeTeam]);
-
-  useEffect(() => {
-    setBeltRank(storeBeltRank);
-  }, [storeBeltRank]);
-
-  // Debounced sync to store for athlete name
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (athleteName !== storeAthleteName) {
-        setField('athleteName', athleteName);
-      }
-    }, DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [athleteName, storeAthleteName, setField]);
-
-  // Debounced sync to store for team
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (team !== storeTeam) {
-        setField('team', team);
-      }
-    }, DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [team, storeTeam, setField]);
-
   // Validate a single field using Zod schema
   const validateField = useCallback(
     (fieldName: 'athleteName' | 'team', value: string): string | undefined => {
@@ -97,13 +66,54 @@ export function AthleteInfoFields(): React.ReactElement {
     []
   );
 
+  // Sync local state when store changes (e.g., rehydration from localStorage)
+  useEffect(() => {
+    setAthleteName(storeAthleteName);
+  }, [storeAthleteName]);
+
+  useEffect(() => {
+    setTeam(storeTeam);
+  }, [storeTeam]);
+
+  useEffect(() => {
+    setBeltRank(storeBeltRank);
+  }, [storeBeltRank]);
+
+  // Debounced sync to store for athlete name (only sync valid data)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (athleteName !== storeAthleteName) {
+        const error = validateField('athleteName', athleteName);
+        if (!error) {
+          setField('athleteName', athleteName);
+        }
+      }
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [athleteName, storeAthleteName, setField, validateField]);
+
+  // Debounced sync to store for team (only sync valid data)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (team !== storeTeam) {
+        const error = validateField('team', team);
+        if (!error) {
+          setField('team', team);
+        }
+      }
+    }, DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [team, storeTeam, setField, validateField]);
+
   // Handler for athlete name input - clears error optimistically when typing
   const handleAthleteNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       setAthleteName(value);
       // Clear error when user starts typing valid input
-      if (errors.athleteName && value.trim().length > 0 && value.length <= 50) {
+      if (errors.athleteName && value.trim().length > 0 && value.length <= MAX_NAME_LENGTH) {
         setErrors((prev) => ({ ...prev, athleteName: undefined }));
       }
     },
@@ -122,7 +132,7 @@ export function AthleteInfoFields(): React.ReactElement {
       const value = e.target.value;
       setTeam(value);
       // Clear error when user starts typing valid input (team is optional, so only max length matters)
-      if (errors.team && value.length <= 50) {
+      if (errors.team && value.length <= MAX_TEAM_LENGTH) {
         setErrors((prev) => ({ ...prev, team: undefined }));
       }
     },

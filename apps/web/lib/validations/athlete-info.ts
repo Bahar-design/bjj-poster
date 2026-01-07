@@ -1,17 +1,20 @@
 import { z } from 'zod';
 
+/** Maximum length for athlete name field */
+export const MAX_NAME_LENGTH = 50;
+
+/** Maximum length for team field */
+export const MAX_TEAM_LENGTH = 50;
+
 export const athleteInfoSchema = z.object({
   athleteName: z
     .string()
     .trim()
     .min(1, 'Athlete name is required')
-    .max(50, 'Name must be 50 characters or less'),
+    .max(MAX_NAME_LENGTH, 'Name must be 50 characters or less'),
   beltRank: z.enum(['white', 'blue', 'purple', 'brown', 'black', 'red-black', 'red']),
-  team: z
-    .string()
-    .max(50, 'Team must be 50 characters or less')
-    .optional()
-    .or(z.literal('')),
+  /** Team is optional - empty string is valid */
+  team: z.string().max(MAX_TEAM_LENGTH, 'Team must be 50 characters or less'),
 });
 
 export type AthleteInfoFormData = z.infer<typeof athleteInfoSchema>;
