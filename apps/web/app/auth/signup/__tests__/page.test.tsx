@@ -99,4 +99,22 @@ describe('Signup Page', () => {
       );
     });
   });
+
+  describe('Mobile Layout', () => {
+    it('renders form at 375px viewport', () => {
+      // Set viewport width
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 375,
+      });
+      window.dispatchEvent(new Event('resize'));
+
+      render(<SignupPage />);
+
+      expect(screen.getByRole('form')).toBeInTheDocument();
+      expect(screen.getByLabelText('Email')).toBeInTheDocument();
+      expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    });
+  });
 });
