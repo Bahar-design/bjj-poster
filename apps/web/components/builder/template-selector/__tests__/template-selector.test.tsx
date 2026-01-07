@@ -9,13 +9,11 @@ vi.mock('@/lib/hooks', () => ({
 }));
 
 vi.mock('@/lib/stores/poster-builder-store', () => ({
-  usePosterBuilderStore: vi.fn(() => ({
-    selectedTemplateId: null,
-    setTemplate: vi.fn(),
-  })),
+  usePosterBuilderStore: vi.fn(),
 }));
 
 import { useTemplates } from '@/lib/hooks';
+import { usePosterBuilderStore } from '@/lib/stores/poster-builder-store';
 
 const mockTemplates = [
   { id: 'tpl-001', name: 'Classic', category: 'tournament', thumbnailUrl: '/1.png' },
@@ -36,6 +34,10 @@ const createWrapper = () => {
 describe('TemplateSelector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(usePosterBuilderStore).mockReturnValue({
+      selectedTemplateId: null,
+      setTemplate: vi.fn(),
+    });
   });
 
   it('shows loading skeletons when loading', () => {
@@ -192,5 +194,45 @@ describe('TemplateSelector', () => {
 
     // All templates visible again
     expect(screen.getByText('Kids')).toBeInTheDocument();
+  });
+
+  it('updates store when template selected', async () => {
+    const setTemplate = vi.fn();
+    vi.mocked(usePosterBuilderStore).mockReturnValue({
+      selectedTemplateId: null,
+      setTemplate,
+    });
+
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: createWrapper() });
+
+    await userEvent.click(screen.getByText('Classic'));
+    expect(setTemplate).toHaveBeenCalledWith('tpl-001');
+  });
+
+  it('shows selected template with visual indicator', () => {
+    vi.mocked(usePosterBuilderStore).mockReturnValue({
+      selectedTemplateId: 'tpl-001',
+      setTemplate: vi.fn(),
+    });
+
+    vi.mocked(useTemplates).mockReturnValue({
+      data: mockTemplates,
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as ReturnType<typeof useTemplates>);
+
+    render(<TemplateSelector />, { wrapper: createWrapper() });
+
+    expect(screen.getByTestId('checkmark-icon')).toBeInTheDocument();
   });
 });
