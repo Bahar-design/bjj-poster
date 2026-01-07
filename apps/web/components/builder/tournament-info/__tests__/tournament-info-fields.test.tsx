@@ -106,6 +106,38 @@ describe('TournamentInfoFields', () => {
 
       expect(input).toHaveAttribute('aria-invalid', 'true');
     });
+
+    it('shows error when location exceeds 100 characters', async () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ showAdvancedOptions: true });
+        return selector ? selector(state) : state;
+      });
+
+      const user = userEvent.setup();
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/location/i);
+      await user.type(input, 'A'.repeat(101));
+      await user.tab();
+
+      expect(screen.getByText('Location must be 100 characters or less')).toBeInTheDocument();
+    });
+
+    it('does not show error for empty location (optional)', async () => {
+      vi.mocked(usePosterBuilderStore).mockImplementation((selector) => {
+        const state = createMockState({ showAdvancedOptions: true });
+        return selector ? selector(state) : state;
+      });
+
+      const user = userEvent.setup();
+      render(<TournamentInfoFields />);
+
+      const input = screen.getByLabelText(/location/i);
+      await user.click(input);
+      await user.tab();
+
+      expect(screen.queryByText(/required/i)).not.toBeInTheDocument();
+    });
   });
 
   describe('collapsible section', () => {
