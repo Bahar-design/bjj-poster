@@ -16,21 +16,19 @@ import {
 } from '@/lib/validations/auth';
 import { cn } from '@/lib/utils';
 
-type AuthFormData = LoginFormData | SignupFormData;
-
-interface AuthFormProps {
-  mode: 'login' | 'signup';
-  onSubmit: (data: AuthFormData) => Promise<void>;
-}
+type AuthFormProps =
+  | { mode: 'login'; onSubmit: (data: LoginFormData) => Promise<void> }
+  | { mode: 'signup'; onSubmit: (data: SignupFormData) => Promise<void> };
 
 export function AuthForm({ mode, onSubmit }: AuthFormProps) {
   const schema = mode === 'login' ? loginSchema : signupSchema;
+  type FormData = LoginFormData | SignupFormData;
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<AuthFormData>({
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -58,7 +56,7 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           )}
           {...register('email')}
         />
-        {errors.email && (
+        {errors.email?.message && (
           <p className="text-sm text-red-500">{errors.email.message}</p>
         )}
       </div>
@@ -80,7 +78,7 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           )}
           {...register('password')}
         />
-        {errors.password && (
+        {errors.password?.message && (
           <p className="text-sm text-red-500">{errors.password.message}</p>
         )}
       </div>

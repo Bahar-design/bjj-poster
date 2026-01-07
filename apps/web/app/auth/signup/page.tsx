@@ -1,25 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { AuthForm } from '@/components/auth/auth-form';
 import type { SignupFormData } from '@/lib/validations/auth';
 
-export default function SignupPage() {
+export default function SignupPage(): JSX.Element {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (data: SignupFormData): Promise<void> => {
+    setError(null);
     try {
       // Mock delay to simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // TODO: Implement actual signup logic
-      console.log('Signup attempt for:', data.email);
+      void data; // Suppress unused variable warning until real implementation
 
       router.push('/');
-    } catch (error) {
-      // TODO: Display error message to user
-      console.error('Signup failed:', error);
+    } catch (err) {
+      setError('Signup failed. Please try again later.');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Signup error:', err);
+      }
     }
   };
 
@@ -31,6 +36,11 @@ export default function SignupPage() {
           Start creating tournament posters
         </p>
       </div>
+      {error && (
+        <div className="mb-4 rounded-md bg-red-500/10 p-3 text-center text-sm text-red-500">
+          {error}
+        </div>
+      )}
       <AuthForm mode="signup" onSubmit={handleSubmit} />
     </>
   );
