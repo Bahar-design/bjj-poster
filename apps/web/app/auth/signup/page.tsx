@@ -9,13 +9,18 @@ export default function SignupPage() {
   const router = useRouter();
 
   const handleSubmit = async (data: SignupFormData): Promise<void> => {
-    // Mock delay to simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Mock delay to simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // TODO: Implement actual signup logic
-    console.log('Signup data:', data);
+      // TODO: Implement actual signup logic
+      console.log('Signup attempt for:', data.email);
 
-    router.push('/');
+      router.push('/');
+    } catch (error) {
+      // TODO: Display error message to user
+      console.error('Signup failed:', error);
+    }
   };
 
   return (

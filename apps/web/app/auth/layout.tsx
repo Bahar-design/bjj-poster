@@ -1,6 +1,7 @@
 import Link from 'next/link';
+import type { JSX } from 'react';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-primary-900 px-4 py-12">
       <div className="w-full max-w-md">

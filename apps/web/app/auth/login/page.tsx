@@ -9,13 +9,18 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleSubmit = async (data: LoginFormData): Promise<void> => {
-    // Mock delay to simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Mock delay to simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // TODO: Implement actual login logic
-    console.log('Login data:', data);
+      // TODO: Implement actual login logic
+      console.log('Login attempt for:', data.email);
 
-    router.push('/');
+      router.push('/');
+    } catch (error) {
+      // TODO: Display error message to user
+      console.error('Login failed:', error);
+    }
   };
 
   return (

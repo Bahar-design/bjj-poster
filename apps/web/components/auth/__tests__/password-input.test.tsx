@@ -5,15 +5,16 @@ import { PasswordInput } from '../password-input';
 
 describe('PasswordInput', () => {
   it('renders password input with hidden text by default', () => {
-    render(<PasswordInput />);
-    expect(screen.getByRole('textbox')).toHaveAttribute('type', 'password');
+    render(<PasswordInput placeholder="Password" />);
+    const input = screen.getByPlaceholderText('Password');
+    expect(input).toHaveAttribute('type', 'password');
   });
 
   it('toggles visibility when eye button is clicked', async () => {
     const user = userEvent.setup();
-    render(<PasswordInput />);
+    render(<PasswordInput placeholder="Password" />);
 
-    const input = screen.getByRole('textbox');
+    const input = screen.getByPlaceholderText('Password');
     const toggleButton = screen.getByRole('button', { name: /show password/i });
 
     expect(input).toHaveAttribute('type', 'password');
@@ -28,14 +29,15 @@ describe('PasswordInput', () => {
 
   it('toggles back to hidden when clicked again', async () => {
     const user = userEvent.setup();
-    render(<PasswordInput />);
+    render(<PasswordInput placeholder="Password" />);
 
+    const input = screen.getByPlaceholderText('Password');
     const toggleButton = screen.getByRole('button', { name: /show password/i });
 
     await user.click(toggleButton);
     await user.click(screen.getByRole('button', { name: /hide password/i }));
 
-    expect(screen.getByRole('textbox')).toHaveAttribute('type', 'password');
+    expect(input).toHaveAttribute('type', 'password');
   });
 
   it('forwards ref to input element', () => {
@@ -46,7 +48,7 @@ describe('PasswordInput', () => {
 
   it('passes through additional props', () => {
     render(<PasswordInput placeholder="Enter password" id="test-password" />);
-    const input = screen.getByRole('textbox');
+    const input = screen.getByPlaceholderText('Enter password');
     expect(input).toHaveAttribute('placeholder', 'Enter password');
     expect(input).toHaveAttribute('id', 'test-password');
   });
