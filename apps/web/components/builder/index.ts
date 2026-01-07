@@ -16,3 +16,4 @@ export type {
 } from './photo-upload';
 export { TemplateSelector } from './template-selector';
 export { AthleteInfoFields } from './athlete-info';
+export { TournamentInfoFields } from './tournament-info';
