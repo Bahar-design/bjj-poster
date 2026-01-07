@@ -12,6 +12,13 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { usePosterBuilderStore, type BeltRank } from '@/lib/stores';
+import { athleteInfoSchema } from '@/lib/validations';
+
+/** Type for field-specific errors */
+interface FieldErrors {
+  athleteName?: string;
+  team?: string;
+}
 
 /** Belt rank configuration with display names and colors */
 const BELT_OPTIONS = [
@@ -38,6 +45,10 @@ export function AthleteInfoFields(): React.ReactElement {
   const [athleteName, setAthleteName] = useState(storeAthleteName);
   const [team, setTeam] = useState(storeTeam);
   const [beltRank, setBeltRank] = useState<BeltRank>(storeBeltRank);
+
+  // Validation state
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   // Sync local state when store changes (e.g., rehydration from localStorage)
   useEffect(() => {
@@ -74,21 +85,58 @@ export function AthleteInfoFields(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [team, storeTeam, setField]);
 
-  // Handler for athlete name input
-  const handleAthleteNameChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setAthleteName(e.target.value);
+  // Validate a single field using Zod schema
+  const validateField = useCallback(
+    (fieldName: 'athleteName' | 'team', value: string): string | undefined => {
+      const fieldSchema = athleteInfoSchema.shape[fieldName];
+      const result = fieldSchema.safeParse(value);
+      if (!result.success) {
+        return result.error.errors[0]?.message;
+      }
+      return undefined;
     },
     []
   );
 
-  // Handler for team input
+  // Handler for athlete name input - clears error optimistically when typing
+  const handleAthleteNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setAthleteName(value);
+      // Clear error when user starts typing valid input
+      if (errors.athleteName && value.trim().length > 0 && value.length <= 50) {
+        setErrors((prev) => ({ ...prev, athleteName: undefined }));
+      }
+    },
+    [errors.athleteName]
+  );
+
+  // Handler for athlete name blur - validates on blur
+  const handleAthleteNameBlur = useCallback(() => {
+    setTouched((prev) => ({ ...prev, athleteName: true }));
+    const error = validateField('athleteName', athleteName);
+    setErrors((prev) => ({ ...prev, athleteName: error }));
+  }, [athleteName, validateField]);
+
+  // Handler for team input - clears error optimistically when typing
   const handleTeamChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTeam(e.target.value);
+      const value = e.target.value;
+      setTeam(value);
+      // Clear error when user starts typing valid input (team is optional, so only max length matters)
+      if (errors.team && value.length <= 50) {
+        setErrors((prev) => ({ ...prev, team: undefined }));
+      }
     },
-    []
+    [errors.team]
   );
+
+  // Handler for team blur - validates on blur
+  const handleTeamBlur = useCallback(() => {
+    setTouched((prev) => ({ ...prev, team: true }));
+    const error = validateField('team', team);
+    setErrors((prev) => ({ ...prev, team: error }));
+  }, [team, validateField]);
 
   // Handler for belt rank - updates immediately (no debounce)
   const handleBeltRankChange = useCallback(
@@ -111,10 +159,18 @@ export function AthleteInfoFields(): React.ReactElement {
           id="athlete-name"
           type="text"
           placeholder="Enter athlete name"
-          maxLength={50}
           value={athleteName}
           onChange={handleAthleteNameChange}
+          onBlur={handleAthleteNameBlur}
+          aria-required="true"
+          aria-invalid={!!errors.athleteName}
+          aria-describedby={errors.athleteName ? 'athlete-name-error' : undefined}
         />
+        {errors.athleteName && (
+          <p id="athlete-name-error" className="text-sm text-destructive">
+            {errors.athleteName}
+          </p>
+        )}
       </div>
 
       {/* Belt Rank */}
@@ -123,7 +179,7 @@ export function AthleteInfoFields(): React.ReactElement {
           Belt Rank <span className="text-destructive">*</span>
         </Label>
         <Select value={beltRank} onValueChange={handleBeltRankChange}>
-          <SelectTrigger id="belt-rank">
+          <SelectTrigger id="belt-rank" aria-required="true">
             <SelectValue placeholder="Select belt rank" />
           </SelectTrigger>
           <SelectContent>
@@ -152,10 +208,17 @@ export function AthleteInfoFields(): React.ReactElement {
           id="team"
           type="text"
           placeholder="Enter team name"
-          maxLength={50}
           value={team}
           onChange={handleTeamChange}
+          onBlur={handleTeamBlur}
+          aria-invalid={!!errors.team}
+          aria-describedby={errors.team ? 'team-error' : undefined}
         />
+        {errors.team && (
+          <p id="team-error" className="text-sm text-destructive">
+            {errors.team}
+          </p>
+        )}
       </div>
     </div>
   );

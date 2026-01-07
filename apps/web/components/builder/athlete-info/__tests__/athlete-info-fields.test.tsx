@@ -190,4 +190,89 @@ describe('AthleteInfoFields', () => {
       vi.useRealTimers();
     });
   });
+
+  describe('validation', () => {
+    it('shows error when athlete name is empty on blur', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.click(input);
+      await user.tab(); // Blur
+
+      expect(screen.getByText('Athlete name is required')).toBeInTheDocument();
+    });
+
+    it('shows error when athlete name exceeds 50 characters', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.type(input, 'A'.repeat(51));
+      await user.tab();
+
+      expect(screen.getByText('Name must be 50 characters or less')).toBeInTheDocument();
+    });
+
+    it('clears error when user starts typing valid input', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.click(input);
+      await user.tab();
+
+      expect(screen.getByText('Athlete name is required')).toBeInTheDocument();
+
+      await user.type(input, 'John');
+
+      expect(screen.queryByText('Athlete name is required')).not.toBeInTheDocument();
+    });
+
+    it('shows error when team exceeds 50 characters', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/team/i);
+      await user.type(input, 'A'.repeat(51));
+      await user.tab();
+
+      expect(screen.getByText('Team must be 50 characters or less')).toBeInTheDocument();
+    });
+
+    it('does not show error for empty team (optional)', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/team/i);
+      await user.click(input);
+      await user.tab();
+
+      expect(screen.queryByText(/required/i)).not.toBeInTheDocument();
+    });
+
+    it('sets aria-invalid on input with error', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.click(input);
+      await user.tab();
+
+      expect(input).toHaveAttribute('aria-invalid', 'true');
+    });
+
+    it('links error message with aria-describedby', async () => {
+      const user = userEvent.setup();
+      render(<AthleteInfoFields />);
+
+      const input = screen.getByLabelText(/athlete name/i);
+      await user.click(input);
+      await user.tab();
+
+      const errorId = input.getAttribute('aria-describedby');
+      expect(errorId).toBeTruthy();
+      expect(document.getElementById(errorId!)).toHaveTextContent('Athlete name is required');
+    });
+  });
 });
