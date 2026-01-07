@@ -77,4 +77,83 @@ describe('composePoster', () => {
       ).rejects.toThrow(InvalidInputError);
     });
   });
+
+  describe('successful composition', () => {
+    const validData = {
+      athleteName: 'João Silva',
+      achievement: 'Gold Medal',
+      tournamentName: 'World Championship 2025',
+      date: 'June 2025',
+    };
+
+    it('composes poster with valid inputs and returns PNG by default', async () => {
+      const result = await composePoster({
+        templateId: 'classic',
+        athletePhoto: validPhoto,
+        data: validData,
+      });
+
+      expect(result.buffer).toBeInstanceOf(Buffer);
+      expect(result.buffer.length).toBeGreaterThan(0);
+      expect(result.metadata.format).toBe('png');
+      expect(result.metadata.width).toBe(1080);
+      expect(result.metadata.height).toBe(1350);
+      expect(result.metadata.size).toBe(result.buffer.length);
+    });
+
+    it('composes poster with JPEG output', async () => {
+      const result = await composePoster({
+        templateId: 'classic',
+        athletePhoto: validPhoto,
+        data: validData,
+        output: { format: 'jpeg', quality: 90 },
+      });
+
+      expect(result.metadata.format).toBe('jpeg');
+    });
+
+    it('composes poster with resize option', async () => {
+      const result = await composePoster({
+        templateId: 'classic',
+        athletePhoto: validPhoto,
+        data: validData,
+        output: { resize: { width: 540 } },
+      });
+
+      expect(result.metadata.width).toBe(540);
+      // Height should be proportionally scaled
+      expect(result.metadata.height).toBe(675);
+    });
+
+    it('calls progress callback for each stage', async () => {
+      const stages: Array<{ stage: string; percent: number }> = [];
+
+      await composePoster({
+        templateId: 'classic',
+        athletePhoto: validPhoto,
+        data: validData,
+        onProgress: (stage, percent) => {
+          stages.push({ stage, percent });
+        },
+      });
+
+      expect(stages).toContainEqual({ stage: 'loading-template', percent: 0 });
+      expect(stages).toContainEqual({ stage: 'creating-background', percent: 10 });
+      expect(stages).toContainEqual({ stage: 'processing-photo', percent: 30 });
+      expect(stages).toContainEqual({ stage: 'compositing-photo', percent: 50 });
+      expect(stages).toContainEqual({ stage: 'rendering-text', percent: 70 });
+      expect(stages).toContainEqual({ stage: 'encoding-output', percent: 90 });
+    });
+
+    it('works with modern template', async () => {
+      const result = await composePoster({
+        templateId: 'modern',
+        athletePhoto: validPhoto,
+        data: validData, // Modern template uses same field IDs
+      });
+
+      expect(result.buffer).toBeInstanceOf(Buffer);
+      expect(result.metadata.width).toBe(1080);
+    });
+  });
 });
