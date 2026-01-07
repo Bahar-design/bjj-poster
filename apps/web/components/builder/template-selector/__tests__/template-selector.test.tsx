@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TemplateSelector } from '../template-selector';
 
 // Mock the hooks
@@ -47,7 +48,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -62,7 +63,7 @@ describe('TemplateSelector', () => {
       isError: true,
       error: new Error('Network error'),
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -78,7 +79,7 @@ describe('TemplateSelector', () => {
       isError: true,
       error: new Error('Network error'),
       refetch,
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -93,7 +94,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -110,7 +111,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -134,7 +135,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -156,7 +157,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -181,7 +182,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -209,7 +210,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
@@ -229,7 +230,7 @@ describe('TemplateSelector', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useTemplates>);
+    } as unknown as ReturnType<typeof useTemplates>);
 
     render(<TemplateSelector />, { wrapper: createWrapper() });
 
