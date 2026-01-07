@@ -38,7 +38,7 @@ const BELT_OPTIONS = [
 ] as const;
 
 /** Debounce delay in milliseconds for text field updates */
-const DEBOUNCE_MS = 300;
+export const DEBOUNCE_MS = 300;
 
 /**
  * Form fields for athlete information (name, belt rank, team).
@@ -89,22 +89,22 @@ export function AthleteInfoFields(): React.ReactElement {
     setBeltRank(storeBeltRank);
   }, [storeBeltRank]);
 
-  // Debounced sync to store for athlete name
+  // Debounced sync to store for athlete name (trim to match Zod's .trim() output)
   useDebouncedStoreSync(
     athleteName,
     storeAthleteName,
-    useCallback((value: string) => setField('athleteName', value), [setField]),
+    useCallback((value: string) => setField('athleteName', value.trim()), [setField]),
     {
       delayMs: DEBOUNCE_MS,
       validate: useCallback((value: string) => validateField('athleteName', value), [validateField]),
     }
   );
 
-  // Debounced sync to store for team
+  // Debounced sync to store for team (trim to match Zod's .trim() output)
   useDebouncedStoreSync(
     team,
     storeTeam,
-    useCallback((value: string) => setField('team', value), [setField]),
+    useCallback((value: string) => setField('team', value.trim()), [setField]),
     {
       delayMs: DEBOUNCE_MS,
       validate: useCallback((value: string) => validateField('team', value), [validateField]),

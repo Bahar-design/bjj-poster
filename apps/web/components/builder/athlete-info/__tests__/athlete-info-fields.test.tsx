@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AthleteInfoFields } from '../athlete-info-fields';
+import { AthleteInfoFields, DEBOUNCE_MS } from '../athlete-info-fields';
 import { usePosterBuilderStore } from '@/lib/stores';
 
 // Mock the store - include all required state properties
@@ -139,9 +139,9 @@ describe('AthleteInfoFields', () => {
       // Before debounce, setField should not be called
       expect(mockSetField).not.toHaveBeenCalled();
 
-      // Fast-forward 300ms
+      // Fast-forward past debounce delay
       await act(async () => {
-        vi.advanceTimersByTime(300);
+        vi.advanceTimersByTime(DEBOUNCE_MS);
       });
 
       expect(mockSetField).toHaveBeenCalledWith('athleteName', 'Jane');
@@ -184,7 +184,7 @@ describe('AthleteInfoFields', () => {
       await user.type(input, 'Alliance');
 
       await act(async () => {
-        vi.advanceTimersByTime(300);
+        vi.advanceTimersByTime(DEBOUNCE_MS);
       });
 
       expect(mockSetField).toHaveBeenCalledWith('team', 'Alliance');
@@ -212,7 +212,7 @@ describe('AthleteInfoFields', () => {
 
       // Wait for debounce
       await act(async () => {
-        vi.advanceTimersByTime(300);
+        vi.advanceTimersByTime(DEBOUNCE_MS);
       });
 
       // setField should NOT be called with invalid data
@@ -292,7 +292,7 @@ describe('AthleteInfoFields', () => {
 
       // Wait for debounce to complete
       await act(async () => {
-        vi.advanceTimersByTime(300);
+        vi.advanceTimersByTime(DEBOUNCE_MS);
       });
 
       // Only the final value should be synced
