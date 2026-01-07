@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
 /** Valid BJJ belt ranks */
-export type BeltRank = 'white' | 'blue' | 'purple' | 'brown' | 'black';
+export type BeltRank = 'white' | 'blue' | 'purple' | 'brown' | 'black' | 'red-black' | 'red';
 
 /** Form fields that can be set via setField (excludes athletePhoto and UI state) */
 export type PosterFormField =
