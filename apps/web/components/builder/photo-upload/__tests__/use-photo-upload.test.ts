@@ -59,6 +59,18 @@ describe('usePhotoUpload', () => {
       expect(result.current.file).toBe(file);
     });
 
+    it('accepts valid HEIF file', async () => {
+      const { result } = renderHook(() => usePhotoUpload());
+      const file = createMockFile('photo.heif', 1024, 'image/heif');
+
+      await act(async () => {
+        await result.current.handleFile(file);
+      });
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.file).toBe(file);
+    });
+
     it('rejects file over 10MB', async () => {
       const { result } = renderHook(() => usePhotoUpload());
       const file = createMockFile('large.jpg', 11 * 1024 * 1024, 'image/jpeg');
@@ -152,6 +164,23 @@ describe('usePhotoUpload', () => {
 
       expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:url-1');
       expect(result.current.preview).toBe('blob:url-2');
+    });
+
+    it('revokes URL on unmount to prevent memory leaks', async () => {
+      const { result, unmount } = renderHook(() => usePhotoUpload());
+      const file = createMockFile('photo.jpg', 1024, 'image/jpeg');
+
+      mockCreateObjectURL.mockReturnValueOnce('blob:unmount-url');
+
+      await act(async () => {
+        await result.current.handleFile(file);
+      });
+
+      expect(result.current.preview).toBe('blob:unmount-url');
+
+      unmount();
+
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:unmount-url');
     });
   });
 });

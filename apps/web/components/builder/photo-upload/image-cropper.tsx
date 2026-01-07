@@ -10,6 +10,7 @@ export interface ImageCropperProps {
   preview: string;
   onCropComplete: (croppedFile: File) => void;
   onRemove: () => void;
+  onError?: (message: string) => void;
   className?: string;
 }
 
@@ -17,20 +18,37 @@ export function ImageCropper({
   preview,
   onCropComplete,
   onRemove,
+  onError,
   className,
 }: ImageCropperProps): JSX.Element {
   const imgRef = useRef<HTMLImageElement>(null);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  const [error, setError] = useState<string | null>(null);
 
   const handleCropComplete = useCallback(async (): Promise<void> => {
-    if (!imgRef.current || !completedCrop) {
+    setError(null);
+
+    if (!imgRef.current) {
+      const msg = 'Image not loaded. Please try again.';
+      setError(msg);
+      onError?.(msg);
+      return;
+    }
+
+    if (!completedCrop || completedCrop.width === 0 || completedCrop.height === 0) {
+      const msg = 'Please select a crop area first.';
+      setError(msg);
+      onError?.(msg);
       return;
     }
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
+      const msg = 'Unable to process image. Please try again.';
+      setError(msg);
+      onError?.(msg);
       return;
     }
 
@@ -58,9 +76,13 @@ export function ImageCropper({
           type: 'image/jpeg',
         });
         onCropComplete(croppedFile);
+      } else {
+        const msg = 'Failed to create cropped image. Please try again.';
+        setError(msg);
+        onError?.(msg);
       }
     }, 'image/jpeg');
-  }, [completedCrop, onCropComplete]);
+  }, [completedCrop, onCropComplete, onError]);
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
@@ -79,6 +101,12 @@ export function ImageCropper({
           />
         </ReactCrop>
       </div>
+
+      {error && (
+        <p role="alert" className="text-sm text-red-500">
+          {error}
+        </p>
+      )}
 
       <div className="flex gap-2">
         <Button onClick={handleCropComplete} className="flex-1">

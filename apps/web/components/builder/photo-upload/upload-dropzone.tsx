@@ -42,7 +42,10 @@ export function UploadDropzone({
   const handleDragLeave = (e: React.DragEvent): void => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragActive(false);
+    // Only deactivate if leaving the dropzone entirely, not when entering child elements
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragActive(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent): void => {
@@ -108,7 +111,7 @@ export function UploadDropzone({
         ref={inputRef}
         data-testid="file-input"
         type="file"
-        accept="image/jpeg,image/png,image/heic"
+        accept="image/jpeg,image/png,image/heic,image/heif"
         onChange={handleInputChange}
         className="sr-only"
       />

@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export interface UsePhotoUploadReturn {
@@ -65,6 +65,15 @@ export function usePhotoUpload(): UsePhotoUploadReturn {
     setPreview(null);
     setError(null);
     setIsLoading(false);
+  }, []);
+
+  // Cleanup blob URL on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    };
   }, []);
 
   return { file, preview, error, isLoading, handleFile, clear };

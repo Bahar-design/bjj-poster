@@ -35,7 +35,10 @@ describe('UploadDropzone', () => {
 
       const input = screen.getByTestId('file-input');
       expect(input).toHaveAttribute('type', 'file');
-      expect(input).toHaveAttribute('accept', 'image/jpeg,image/png,image/heic');
+      expect(input).toHaveAttribute(
+        'accept',
+        'image/jpeg,image/png,image/heic,image/heif'
+      );
       expect(input).toHaveClass('sr-only');
     });
   });

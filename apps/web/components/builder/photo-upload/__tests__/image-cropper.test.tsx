@@ -66,5 +66,26 @@ describe('ImageCropper', () => {
 
       expect(onRemove).toHaveBeenCalled();
     });
+
+    it('shows error when Apply Crop clicked without crop selection', async () => {
+      const user = userEvent.setup();
+      render(<ImageCropper {...defaultProps} />);
+
+      await user.click(screen.getByRole('button', { name: /apply crop/i }));
+
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Please select a crop area first.'
+      );
+    });
+
+    it('calls onError callback when crop fails', async () => {
+      const user = userEvent.setup();
+      const onError = vi.fn();
+      render(<ImageCropper {...defaultProps} onError={onError} />);
+
+      await user.click(screen.getByRole('button', { name: /apply crop/i }));
+
+      expect(onError).toHaveBeenCalledWith('Please select a crop area first.');
+    });
   });
 });
