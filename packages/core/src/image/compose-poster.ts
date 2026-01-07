@@ -57,7 +57,8 @@ export interface ComposePosterResult {
 }
 
 /**
- * Progress stages for poster composition
+ * Progress stages for poster composition.
+ * Stages progress from 0% to 100% as the composition completes.
  */
 export const COMPOSE_STAGES = {
   LOADING_TEMPLATE: { name: 'loading-template', percent: 0 },
@@ -66,10 +67,15 @@ export const COMPOSE_STAGES = {
   COMPOSITING_PHOTO: { name: 'compositing-photo', percent: 50 },
   RENDERING_TEXT: { name: 'rendering-text', percent: 70 },
   ENCODING_OUTPUT: { name: 'encoding-output', percent: 90 },
+  COMPLETE: { name: 'complete', percent: 100 },
 } as const;
 
 /**
- * Validate that all required template fields have data
+ * Validate that all required template fields have data.
+ *
+ * Note: Empty strings are rejected because rendering blank text fields
+ * would produce incomplete posters. If you want to hide a field, use a
+ * template without that field instead.
  */
 function validateTemplateData(template: PosterTemplate, data: Record<string, string>): void {
   const missingFields: string[] = [];
@@ -179,11 +185,20 @@ export async function composePoster(options: ComposePosterOptions): Promise<Comp
     onProgress?.(COMPOSE_STAGES.PROCESSING_PHOTO.name, COMPOSE_STAGES.PROCESSING_PHOTO.percent);
     logger.debug('composePoster: processing photo');
 
-    // Get the first photo field from template
-    const photoField = template.photos[0];
-    if (!photoField) {
+    // Validate template has at least one photo field
+    if (template.photos.length === 0) {
       throw new InvalidInputError('Template has no photo field defined');
     }
+
+    // Warn if template has multiple photos (MVP only supports single photo)
+    if (template.photos.length > 1) {
+      logger.warn('composePoster: template has multiple photos, only using first', {
+        templateId,
+        photoCount: template.photos.length,
+      });
+    }
+
+    const photoField = template.photos[0];
 
     // Convert template position to absolute coordinates
     const photoPos = convertTemplatePosition(photoField.position, template.canvas);
@@ -192,7 +207,10 @@ export async function composePoster(options: ComposePosterOptions): Promise<Comp
     onProgress?.(COMPOSE_STAGES.COMPOSITING_PHOTO.name, COMPOSE_STAGES.COMPOSITING_PHOTO.percent);
     logger.debug('composePoster: compositing photo');
 
-    // Calculate position adjusted for centering (position is center point, need top-left)
+    // Convert from center-point coordinates (template format) to top-left coordinates (compositeImage format).
+    // Template positions specify where the CENTER of the element should be placed.
+    // compositeImage() expects top-left corner coordinates for layer placement.
+    // Formula: topLeft = center - (size / 2)
     const composited = await compositeImage({
       background: canvas,
       layers: [
@@ -264,6 +282,8 @@ export async function composePoster(options: ComposePosterOptions): Promise<Comp
     // Get final metadata
     const metadata = await sharp(buffer).metadata();
 
+    // Stage: complete (100%)
+    onProgress?.(COMPOSE_STAGES.COMPLETE.name, COMPOSE_STAGES.COMPLETE.percent);
     logger.debug('composePoster: complete', {
       width: metadata.width,
       height: metadata.height,

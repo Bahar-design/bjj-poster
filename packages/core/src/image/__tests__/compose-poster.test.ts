@@ -125,7 +125,7 @@ describe('composePoster', () => {
       expect(result.metadata.height).toBe(675);
     });
 
-    it('calls progress callback for each stage', async () => {
+    it('calls progress callback for each stage including 100% completion', async () => {
       const stages: Array<{ stage: string; percent: number }> = [];
 
       await composePoster({
@@ -143,13 +143,24 @@ describe('composePoster', () => {
       expect(stages).toContainEqual({ stage: 'compositing-photo', percent: 50 });
       expect(stages).toContainEqual({ stage: 'rendering-text', percent: 70 });
       expect(stages).toContainEqual({ stage: 'encoding-output', percent: 90 });
+      expect(stages).toContainEqual({ stage: 'complete', percent: 100 });
     });
 
     it('works with modern template', async () => {
+      // Modern template has the same text field IDs as classic:
+      // athleteName, achievement, tournamentName, date
+      // This is verified by checking modern.ts field definitions
+      const modernData = {
+        athleteName: 'Test Athlete',
+        achievement: 'Champion',
+        tournamentName: 'Modern Tournament',
+        date: 'January 2026',
+      };
+
       const result = await composePoster({
         templateId: 'modern',
         athletePhoto: validPhoto,
-        data: validData, // Modern template uses same field IDs
+        data: modernData,
       });
 
       expect(result.buffer).toBeInstanceOf(Buffer);
