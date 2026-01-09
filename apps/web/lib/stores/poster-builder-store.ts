@@ -9,6 +9,17 @@ import {
 /** Valid BJJ belt ranks */
 export type BeltRank = 'white' | 'blue' | 'purple' | 'brown' | 'black' | 'red-black' | 'red';
 
+/** Data structure for loading a poster into the builder */
+export interface LoadFromPosterData {
+  templateId: string;
+  athleteName: string;
+  tournament: string;
+  beltRank: BeltRank;
+  team?: string;
+  date?: string;
+  location?: string;
+}
+
 /** Form fields that can be set via setField (excludes athletePhoto and UI state) */
 export type PosterFormField =
   | 'athleteName'
@@ -85,6 +96,11 @@ export interface PosterBuilderActions {
    * @returns The generated poster response
    */
   generatePoster: () => Promise<GeneratePosterResponse>;
+  /**
+   * Loads poster data into the form for duplication.
+   * Clears athletePhoto since it cannot be duplicated.
+   */
+  loadFromPoster: (data: LoadFromPosterData) => void;
 }
 
 export type PosterBuilderStore = PosterBuilderState & PosterBuilderActions;
@@ -182,6 +198,20 @@ export const usePosterBuilderStore = create<PosterBuilderStore>()(
             throw error;
           }
         },
+
+        loadFromPoster: (data) =>
+          set({
+            athletePhoto: null,
+            athleteName: data.athleteName,
+            beltRank: data.beltRank,
+            team: data.team ?? '',
+            tournament: data.tournament,
+            date: data.date ?? '',
+            location: data.location ?? '',
+            selectedTemplateId: data.templateId,
+            isGenerating: false,
+            generationProgress: 0,
+          }),
       }),
       {
         name: 'poster-builder-draft',
