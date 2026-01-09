@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,6 @@ import {
   type LoginFormData,
   type SignupFormData,
 } from '@/lib/validations/auth';
-import { cn } from '@/lib/utils';
 
 type AuthFormProps =
   | { mode: 'login'; onSubmit: (data: LoginFormData) => Promise<void> }
@@ -37,11 +36,11 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
   });
 
   return (
-    <form onSubmit={submitHandler} className="space-y-4" role="form">
+    <form onSubmit={submitHandler} className="space-y-5" role="form">
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block font-body text-sm font-medium text-white"
+          className="block text-sm font-medium text-surface-300"
         >
           Email
         </label>
@@ -50,21 +49,18 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          className={cn(
-            'bg-primary-700 border-primary-600 text-white placeholder:text-primary-400',
-            errors.email && 'border-red-500'
-          )}
+          error={!!errors.email}
           {...register('email')}
         />
         {errors.email?.message && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
+          <p className="text-sm text-red-400">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
         <label
           htmlFor="password"
-          className="block font-body text-sm font-medium text-white"
+          className="block text-sm font-medium text-surface-300"
         >
           Password
         </label>
@@ -72,14 +68,11 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
           id="password"
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           placeholder="Enter your password"
-          className={cn(
-            'bg-primary-700 border-primary-600 text-white placeholder:text-primary-400',
-            errors.password && 'border-red-500'
-          )}
+          error={!!errors.password}
           {...register('password')}
         />
         {errors.password?.message && (
-          <p className="text-sm text-red-500">{errors.password.message}</p>
+          <p className="text-sm text-red-400">{errors.password.message}</p>
         )}
       </div>
 
@@ -87,38 +80,55 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps) {
         <div className="text-right">
           <Link
             href="/auth/forgot-password"
-            className="font-body text-sm text-primary-300 hover:text-white"
+            className="text-sm text-surface-400 transition-colors hover:text-gold-400"
           >
             Forgot password?
           </Link>
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button
+        type="submit"
+        className="group w-full"
+        size="lg"
+        isLoading={isSubmitting}
+      >
+        {!isSubmitting && (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-            {mode === 'login' ? 'Signing in...' : 'Creating account...'}
+            {mode === 'login' ? 'Sign in' : 'Create account'}
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </>
-        ) : mode === 'login' ? (
-          'Sign in'
-        ) : (
-          'Create account'
         )}
       </Button>
 
-      <p className="text-center font-body text-sm text-primary-300">
+      {/* Divider */}
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-surface-800" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-surface-900 px-4 text-xs text-surface-500">or</span>
+        </div>
+      </div>
+
+      <p className="text-center text-sm text-surface-400">
         {mode === 'login' ? (
           <>
             Don&apos;t have an account?{' '}
-            <Link href="/auth/signup" className="text-white hover:underline">
+            <Link
+              href="/auth/signup"
+              className="font-medium text-gold-500 transition-colors hover:text-gold-400"
+            >
               Sign up
             </Link>
           </>
         ) : (
           <>
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-white hover:underline">
+            <Link
+              href="/auth/login"
+              className="font-medium text-gold-500 transition-colors hover:text-gold-400"
+            >
               Sign in
             </Link>
           </>

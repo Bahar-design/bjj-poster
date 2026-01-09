@@ -1,18 +1,18 @@
 import type { Metadata } from 'next';
-import { Archivo_Black, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Bebas_Neue, Outfit, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const archivoBlack = Archivo_Black({
+const bebasNeue = Bebas_Neue({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-archivo-black',
+  variable: '--font-bebas-neue',
   display: 'swap',
 });
 
-const dmSans = DM_Sans({
+const outfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-dm-sans',
+  variable: '--font-outfit',
   display: 'swap',
 });
 
@@ -23,8 +23,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'BJJ Poster Builder',
-  description: 'Tournament poster generator for BJJ athletes',
+  title: 'BJJ Poster Builder | Create Professional Tournament Posters',
+  description: 'Create stunning professional tournament posters for BJJ athletes. Showcase your achievements with premium designs.',
 };
 
 export default function RootLayout({
@@ -35,9 +35,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${archivoBlack.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
+      className={`${bebasNeue.variable} ${outfit.variable} ${jetbrainsMono.variable} dark`}
     >
-      <body className="font-body antialiased">
+      <body className="font-body antialiased min-h-screen bg-surface-950">
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -3,7 +3,6 @@
 import { Eye } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { usePosterBuilderStore } from '@/lib/stores';
 
@@ -49,19 +48,33 @@ export function FloatingPreviewButton(): JSX.Element | null {
   }
 
   return (
-    <div className="fixed bottom-24 right-4 z-40 md:bottom-8">
-      <Button
-        variant="secondary"
-        size="icon"
+    <div className="fixed bottom-24 right-4 z-40 md:bottom-8 md:right-8">
+      <button
         onClick={togglePreview}
         aria-label="Preview poster"
         className={cn(
-          'h-14 w-14 rounded-full shadow-lg',
-          isValid && 'animate-pulse-subtle'
+          'group relative flex h-14 w-14 items-center justify-center rounded-full',
+          'bg-surface-800 border border-surface-700',
+          'shadow-xl shadow-black/30',
+          'transition-all duration-300 ease-out-expo',
+          'hover:scale-110 hover:border-gold-500/50 hover:shadow-gold-md',
+          'focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:ring-offset-2 focus:ring-offset-surface-950',
+          isValid && 'animate-pulse-gold border-gold-500/30'
         )}
       >
-        <Eye data-testid="eye-icon" className="h-6 w-6" />
-      </Button>
+        {/* Glow effect when valid */}
+        {isValid && (
+          <div className="absolute inset-0 rounded-full bg-gold-500/20 blur-md" />
+        )}
+
+        <Eye
+          data-testid="eye-icon"
+          className={cn(
+            'relative h-6 w-6 transition-colors',
+            isValid ? 'text-gold-500' : 'text-surface-400 group-hover:text-white'
+          )}
+        />
+      </button>
     </div>
   );
 }
