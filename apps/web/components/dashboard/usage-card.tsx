@@ -65,7 +65,14 @@ export function UsageCard({ className }: UsageCardProps): JSX.Element {
                 <span className="ml-2 text-surface-400">{getSubtext()}</span>
               </div>
 
-              <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-surface-800">
+              <div
+                role="progressbar"
+                aria-valuenow={postersThisMonth}
+                aria-valuemin={0}
+                aria-valuemax={postersLimit}
+                aria-label={`${postersThisMonth} of ${postersLimit} posters used`}
+                className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-surface-800"
+              >
                 <div
                   data-testid="usage-progress"
                   className={cn('h-full rounded-full transition-all duration-500', progressColor)}

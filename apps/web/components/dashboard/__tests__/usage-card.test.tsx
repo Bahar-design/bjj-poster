@@ -297,4 +297,24 @@ describe('UsageCard', () => {
       expect(screen.queryByRole('link', { name: /upgrade/i })).not.toBeInTheDocument();
     });
   });
+
+  describe('accessibility', () => {
+    it('has accessible progress bar with aria attributes', () => {
+      mockUseUserStore.mockImplementation((selector) =>
+        selector({
+          postersThisMonth: 5,
+          postersLimit: 10,
+          subscriptionTier: 'pro',
+        })
+      );
+
+      render(<UsageCard />);
+
+      const progressBar = screen.getByRole('progressbar');
+      expect(progressBar).toHaveAttribute('aria-valuenow', '5');
+      expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+      expect(progressBar).toHaveAttribute('aria-valuemax', '10');
+      expect(progressBar).toHaveAttribute('aria-label', '5 of 10 posters used');
+    });
+  });
 });
