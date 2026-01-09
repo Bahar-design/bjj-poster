@@ -16,6 +16,11 @@ vi.mock('@/lib/stores', () => ({
   UNLIMITED: -1,
 }));
 
+// Mock UsageCard since it has its own tests
+vi.mock('../usage-card', () => ({
+  UsageCard: () => <div data-testid="usage-card-mock">UsageCard</div>,
+}));
+
 describe('WelcomeSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -27,7 +32,6 @@ describe('WelcomeSection', () => {
         user: { name: 'John Doe', email: 'john@example.com' },
         postersThisMonth: 2,
         postersLimit: 5,
-        subscriptionTier: 'free',
       })
     );
 
@@ -43,7 +47,6 @@ describe('WelcomeSection', () => {
         user: null,
         postersThisMonth: 0,
         postersLimit: 3,
-        subscriptionTier: 'free',
       })
     );
 
@@ -52,82 +55,45 @@ describe('WelcomeSection', () => {
     expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
   });
 
-  it('displays usage indicator with correct values', () => {
+  it('shows at-limit message when user has reached quota', () => {
     mockUseUserStore.mockImplementation((selector) =>
       selector({
         user: { name: 'John', email: 'john@example.com' },
-        postersThisMonth: 2,
-        postersLimit: 5,
-        subscriptionTier: 'pro',
-      })
-    );
-
-    render(<WelcomeSection />);
-
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
-    expect(screen.getByText(/posters used/i)).toBeInTheDocument();
-  });
-
-  it('shows upgrade CTA for free users approaching limit', () => {
-    mockUseUserStore.mockImplementation((selector) =>
-      selector({
-        user: { name: 'John', email: 'john@example.com' },
-        postersThisMonth: 2,
+        postersThisMonth: 3,
         postersLimit: 3,
-        subscriptionTier: 'free',
       })
     );
 
     render(<WelcomeSection />);
 
-    const upgradeLink = screen.getByRole('link', { name: /upgrade/i });
-    expect(upgradeLink).toHaveAttribute('href', '/pricing');
+    expect(screen.getByText(/reached your monthly limit/i)).toBeInTheDocument();
   });
 
-  it('hides upgrade CTA for pro users', () => {
+  it('shows ready message when user has quota remaining', () => {
     mockUseUserStore.mockImplementation((selector) =>
       selector({
         user: { name: 'John', email: 'john@example.com' },
-        postersThisMonth: 10,
-        postersLimit: 20,
-        subscriptionTier: 'pro',
+        postersThisMonth: 1,
+        postersLimit: 3,
       })
     );
 
     render(<WelcomeSection />);
 
-    expect(screen.queryByRole('link', { name: /upgrade/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/ready to create/i)).toBeInTheDocument();
   });
 
-  it('shows unlimited badge for premium users', () => {
+  it('renders UsageCard component', () => {
     mockUseUserStore.mockImplementation((selector) =>
       selector({
-        user: { name: 'John', email: 'john@example.com' },
-        postersThisMonth: 50,
-        postersLimit: -1,
-        subscriptionTier: 'premium',
+        user: null,
+        postersThisMonth: 0,
+        postersLimit: 3,
       })
     );
 
     render(<WelcomeSection />);
 
-    expect(screen.getByText(/unlimited/i)).toBeInTheDocument();
-  });
-
-  it('displays progress bar with correct percentage', () => {
-    mockUseUserStore.mockImplementation((selector) =>
-      selector({
-        user: { name: 'John', email: 'john@example.com' },
-        postersThisMonth: 2,
-        postersLimit: 4,
-        subscriptionTier: 'free',
-      })
-    );
-
-    render(<WelcomeSection />);
-
-    const progressBar = screen.getByTestId('usage-progress');
-    expect(progressBar).toHaveStyle({ width: '50%' });
+    expect(screen.getByTestId('usage-card-mock')).toBeInTheDocument();
   });
 });
