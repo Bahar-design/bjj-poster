@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { filterPosters, sortPosters } from '../poster-grid/filter-sort-utils';
+import {
+  filterPosters,
+  sortPosters,
+  isValidFilterOption,
+  isValidSortOption,
+} from '../poster-grid/filter-sort-utils';
 import type { Poster } from '@/lib/types/api';
 
 const createPoster = (overrides: Partial<Poster> = {}): Poster => ({
@@ -120,5 +125,75 @@ describe('sortPosters', () => {
   it('handles empty array', () => {
     const result = sortPosters([], 'newest');
     expect(result).toHaveLength(0);
+  });
+
+  it('sorts case-insensitively by tournament name', () => {
+    const mixedCase: Poster[] = [
+      createPoster({ id: '1', tournament: 'zebra Open' }),
+      createPoster({ id: '2', tournament: 'Alpha Cup' }),
+      createPoster({ id: '3', tournament: 'BETA Championship' }),
+    ];
+    const result = sortPosters(mixedCase, 'a-z');
+    expect(result.map((p) => p.tournament)).toEqual([
+      'Alpha Cup',
+      'BETA Championship',
+      'zebra Open',
+    ]);
+  });
+});
+
+describe('filterPosters edge cases', () => {
+  it('handles case-insensitive belt rank matching', () => {
+    const mixedCase: Poster[] = [
+      createPoster({ id: '1', beltRank: 'white belt' }),
+      createPoster({ id: '2', beltRank: 'WHITE BELT' }),
+      createPoster({ id: '3', beltRank: 'White Belt' }),
+    ];
+    const result = filterPosters(mixedCase, 'white');
+    expect(result).toHaveLength(3);
+  });
+
+  it('handles posters with undefined beltRank', () => {
+    const postersWithMissing = [
+      createPoster({ id: '1', beltRank: 'White Belt' }),
+      createPoster({ id: '2', beltRank: undefined as unknown as string }),
+    ];
+    const result = filterPosters(postersWithMissing, 'white');
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe('1');
+  });
+});
+
+describe('isValidFilterOption', () => {
+  it('returns true for valid filter options', () => {
+    expect(isValidFilterOption('all')).toBe(true);
+    expect(isValidFilterOption('recent')).toBe(true);
+    expect(isValidFilterOption('white')).toBe(true);
+    expect(isValidFilterOption('blue')).toBe(true);
+    expect(isValidFilterOption('purple')).toBe(true);
+    expect(isValidFilterOption('brown')).toBe(true);
+    expect(isValidFilterOption('black')).toBe(true);
+  });
+
+  it('returns false for invalid filter options', () => {
+    expect(isValidFilterOption('invalid')).toBe(false);
+    expect(isValidFilterOption('')).toBe(false);
+    expect(isValidFilterOption('ALL')).toBe(false);
+    expect(isValidFilterOption('Red Belt')).toBe(false);
+  });
+});
+
+describe('isValidSortOption', () => {
+  it('returns true for valid sort options', () => {
+    expect(isValidSortOption('newest')).toBe(true);
+    expect(isValidSortOption('oldest')).toBe(true);
+    expect(isValidSortOption('a-z')).toBe(true);
+  });
+
+  it('returns false for invalid sort options', () => {
+    expect(isValidSortOption('invalid')).toBe(false);
+    expect(isValidSortOption('')).toBe(false);
+    expect(isValidSortOption('z-a')).toBe(false);
+    expect(isValidSortOption('NEWEST')).toBe(false);
   });
 });

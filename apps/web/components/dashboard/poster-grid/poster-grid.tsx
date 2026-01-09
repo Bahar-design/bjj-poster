@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { usePosterHistory } from '@/lib/hooks';
 import { useUserStore } from '@/lib/stores';
 import { PosterCard } from './poster-card';
@@ -23,6 +23,14 @@ export function PosterGrid(): JSX.Element {
     setSort('newest');
   };
 
+  const allPosters = posters ?? [];
+
+  // Memoize filter/sort computation to avoid recalculating on every render
+  const displayedPosters = useMemo(
+    () => sortPosters(filterPosters(allPosters, filter), sort),
+    [allPosters, filter, sort]
+  );
+
   if (isLoading) {
     return (
       <div
@@ -40,14 +48,10 @@ export function PosterGrid(): JSX.Element {
     return <PosterGridError onRetry={refetch} />;
   }
 
-  const allPosters = posters ?? [];
-
   // No posters at all - hide filter controls
   if (allPosters.length === 0) {
     return <PosterGridEmpty />;
   }
-
-  const displayedPosters = sortPosters(filterPosters(allPosters, filter), sort);
 
   // Has posters but none match filters
   if (displayedPosters.length === 0) {

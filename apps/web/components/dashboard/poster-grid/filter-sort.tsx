@@ -1,4 +1,9 @@
-import type { FilterOption, SortOption } from './filter-sort-utils';
+import {
+  isValidFilterOption,
+  isValidSortOption,
+  type FilterOption,
+  type SortOption,
+} from './filter-sort-utils';
 
 interface FilterSortProps {
   filter: FilterOption;
@@ -36,6 +41,20 @@ export function FilterSort({
   const selectClassName =
     'rounded-lg border border-surface-700 bg-surface-800 px-3 py-2 text-sm text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const value = e.target.value;
+    if (isValidFilterOption(value)) {
+      onFilterChange(value);
+    }
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const value = e.target.value;
+    if (isValidSortOption(value)) {
+      onSortChange(value);
+    }
+  };
+
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
@@ -43,7 +62,7 @@ export function FilterSort({
           <span className="text-sm text-surface-400">Filter</span>
           <select
             value={filter}
-            onChange={(e) => onFilterChange(e.target.value as FilterOption)}
+            onChange={handleFilterChange}
             className={selectClassName}
             aria-label="Filter"
           >
@@ -59,7 +78,7 @@ export function FilterSort({
           <span className="text-sm text-surface-400">Sort</span>
           <select
             value={sort}
-            onChange={(e) => onSortChange(e.target.value as SortOption)}
+            onChange={handleSortChange}
             className={selectClassName}
             aria-label="Sort"
           >
@@ -74,6 +93,7 @@ export function FilterSort({
 
       {hasActiveFilters && (
         <button
+          type="button"
           onClick={onClear}
           className="text-sm text-brand-400 hover:text-brand-300 hover:underline"
         >
