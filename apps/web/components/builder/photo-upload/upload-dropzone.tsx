@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface UploadDropzoneProps {
@@ -75,34 +75,58 @@ export function UploadDropzone({
         onDrop={handleDrop}
         disabled={isLoading}
         className={cn(
-          'flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
-          'border-primary-600 bg-primary-900/50 hover:border-primary-400 hover:bg-primary-900/70',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-primary-950',
+          'group flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-all duration-300',
+          'border-surface-700 bg-surface-900/30',
+          'hover:border-gold-500/50 hover:bg-surface-900/50',
+          'focus:outline-none focus:ring-2 focus:ring-gold-500/50 focus:ring-offset-2 focus:ring-offset-surface-950',
           'disabled:cursor-not-allowed disabled:opacity-50',
-          isDragActive && 'border-primary-400 bg-primary-900/70',
-          error && 'border-red-500'
+          isDragActive && 'border-gold-500 bg-gold-500/5 scale-[1.01]',
+          error && 'border-red-500/50'
         )}
       >
         {isLoading ? (
-          <>
-            <Loader2
-              data-testid="loading-spinner"
-              className="h-12 w-12 animate-spin text-primary-400"
-            />
-            <p className="mt-4 text-sm text-primary-300">Processing...</p>
-          </>
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="absolute inset-0 animate-ping rounded-full bg-gold-500/20" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-surface-700 bg-surface-800">
+                <Loader2
+                  data-testid="loading-spinner"
+                  className="h-8 w-8 animate-spin text-gold-500"
+                />
+              </div>
+            </div>
+            <p className="mt-5 text-sm font-medium text-surface-300">Processing image...</p>
+          </div>
         ) : (
           <>
-            <Upload
-              data-testid="upload-icon"
-              className="h-12 w-12 text-primary-400"
-            />
-            <p className="mt-4 text-sm text-primary-200">
-              Tap to upload or drag photo here
-            </p>
-            <p className="mt-2 text-xs text-primary-400">
-              JPG, PNG, HEIC - Max 10MB
-            </p>
+            <div className="relative">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-surface-700 bg-surface-800 transition-all duration-300 group-hover:border-gold-500/50 group-hover:shadow-gold-sm">
+                {isDragActive ? (
+                  <ImagePlus className="h-8 w-8 text-gold-500" />
+                ) : (
+                  <Upload
+                    data-testid="upload-icon"
+                    className="h-8 w-8 text-surface-400 transition-colors group-hover:text-gold-500"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 text-center">
+              <p className="text-sm font-medium text-white">
+                {isDragActive ? (
+                  <span className="text-gold-400">Drop your photo here</span>
+                ) : (
+                  <>
+                    <span className="text-gold-500">Click to upload</span>
+                    <span className="text-surface-400"> or drag and drop</span>
+                  </>
+                )}
+              </p>
+              <p className="mt-2 text-xs text-surface-500">
+                JPG, PNG, HEIC up to 10MB
+              </p>
+            </div>
           </>
         )}
       </button>
@@ -117,9 +141,11 @@ export function UploadDropzone({
       />
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-500">
-          {error}
-        </p>
+        <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2">
+          <p role="alert" className="text-sm text-red-400">
+            {error}
+          </p>
+        </div>
       )}
     </div>
   );

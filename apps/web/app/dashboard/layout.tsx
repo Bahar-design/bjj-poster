@@ -1,12 +1,12 @@
-import { BuilderHeader } from '@/components/builder';
+import { DashboardHeader } from '@/components/dashboard';
 
-interface BuilderLayoutProps {
+interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export default function BuilderLayout({
+export default function DashboardLayout({
   children,
-}: BuilderLayoutProps): JSX.Element {
+}: DashboardLayoutProps): JSX.Element {
   return (
     <div className="relative min-h-screen bg-surface-950">
       {/* Subtle background gradient */}
@@ -15,7 +15,7 @@ export default function BuilderLayout({
       {/* Grain texture */}
       <div className="grain pointer-events-none fixed inset-0" />
 
-      <BuilderHeader />
+      <DashboardHeader />
       <main className="relative w-full">{children}</main>
     </div>
   );

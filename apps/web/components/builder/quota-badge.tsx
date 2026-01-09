@@ -15,22 +15,27 @@ export function QuotaBadge({ className }: QuotaBadgeProps): JSX.Element {
 
   const dotColor =
     percentage < 50
-      ? 'bg-green-500'
+      ? 'bg-emerald-500 shadow-emerald-500/50'
       : percentage < 80
-        ? 'bg-yellow-500'
-        : 'bg-red-500';
+        ? 'bg-amber-500 shadow-amber-500/50'
+        : 'bg-red-500 shadow-red-500/50';
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div
+      className={cn(
+        'flex items-center gap-2.5 rounded-full border border-surface-800 bg-surface-900/50 px-3 py-1.5',
+        className
+      )}
+    >
       <div
         data-testid="quota-dot"
-        className={cn('h-2 w-2 rounded-full', dotColor)}
+        className={cn('h-2 w-2 rounded-full shadow-sm', dotColor)}
       />
-      <span className="font-body text-sm text-primary-300">
-        <span className="font-medium text-white">{postersThisMonth}</span>
-        {' of '}
-        <span className="font-medium text-white">{postersLimit}</span>
-        {' used'}
+      <span className="text-sm text-surface-400">
+        <span className="font-semibold text-white">{postersThisMonth}</span>
+        <span className="mx-1 text-surface-600">/</span>
+        <span className="font-semibold text-white">{postersLimit}</span>
+        <span className="ml-1 text-surface-500">used</span>
       </span>
     </div>
   );

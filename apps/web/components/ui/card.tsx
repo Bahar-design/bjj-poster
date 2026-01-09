@@ -6,7 +6,12 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-xl border bg-card text-card-foreground shadow', className)}
+      className={cn(
+        'rounded-xl border border-surface-800 bg-surface-900/80 backdrop-blur-sm',
+        'shadow-xl shadow-black/20',
+        'transition-all duration-300 ease-out-expo',
+        className
+      )}
       {...props}
     />
   )
@@ -24,7 +29,7 @@ const CardTitle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('font-semibold leading-none tracking-tight', className)}
+      className={cn('font-display text-2xl tracking-wide text-white', className)}
       {...props}
     />
   )
@@ -33,7 +38,7 @@ CardTitle.displayName = 'CardTitle';
 
 const CardDescription = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+    <div ref={ref} className={cn('text-sm text-surface-400', className)} {...props} />
   )
 );
 CardDescription.displayName = 'CardDescription';
@@ -52,4 +57,30 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardFooter.displayName = 'CardFooter';
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+// Premium variant with gold accent
+const CardPremium = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        'group relative rounded-xl overflow-hidden',
+        'bg-surface-900/90 backdrop-blur-xl',
+        'border border-gold-500/20',
+        'shadow-xl shadow-black/30',
+        'transition-all duration-500 ease-out-expo',
+        'hover:border-gold-500/40 hover:shadow-gold-500/10',
+        className
+      )}
+      {...props}
+    >
+      {/* Gold gradient glow on hover */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-transparent" />
+      </div>
+      {props.children}
+    </div>
+  )
+);
+CardPremium.displayName = 'CardPremium';
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, CardPremium };

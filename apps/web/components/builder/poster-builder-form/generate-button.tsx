@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles, ArrowRight } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { usePosterBuilderStore } from '@/lib/stores';
+import { cn } from '@/lib/utils';
 
 export function GenerateButton(): JSX.Element {
   const {
@@ -58,20 +59,28 @@ export function GenerateButton(): JSX.Element {
   };
 
   const buttonContent = isGenerating ? (
-    <>
-      <Loader2 data-testid="loading-spinner" className="h-4 w-4 animate-spin" />
-      <span>Generating... {generationProgress}%</span>
-    </>
+    <div className="flex items-center gap-3">
+      <Loader2 data-testid="loading-spinner" className="h-5 w-5 animate-spin" />
+      <span>Generating...</span>
+      <span className="ml-1 font-mono text-gold-400">{generationProgress}%</span>
+    </div>
   ) : (
-    <span>Generate Poster</span>
+    <div className="flex items-center gap-2">
+      <Sparkles className="h-5 w-5" />
+      <span>Generate Poster</span>
+      <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+    </div>
   );
 
   const button = (
     <Button
-      size="lg"
+      size="xl"
       disabled={isDisabled}
       onClick={handleClick}
-      className="w-full"
+      className={cn(
+        'group w-full',
+        isValid && !isGenerating && 'animate-pulse-gold'
+      )}
     >
       {buttonContent}
     </Button>
@@ -83,10 +92,15 @@ export function GenerateButton(): JSX.Element {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span tabIndex={0}>{button}</span>
+            <span tabIndex={0} className="block w-full">
+              {button}
+            </span>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>Complete required fields to generate</p>
+          <TooltipContent
+            side="top"
+            className="border-surface-700 bg-surface-800 text-white"
+          >
+            <p className="text-sm">Complete all required fields to generate</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
