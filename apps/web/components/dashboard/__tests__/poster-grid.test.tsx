@@ -300,7 +300,8 @@ describe('PosterGrid with filter/sort', () => {
     fireEvent.change(screen.getByLabelText(/filter/i), { target: { value: 'white' } });
     // Click the primary clear button in the empty state
     const clearButtons = screen.getAllByRole('button', { name: /clear filters/i });
-    fireEvent.click(clearButtons[0]);
+    expect(clearButtons[0]).toBeDefined();
+    fireEvent.click(clearButtons[0] as HTMLElement);
 
     expect(screen.getByText('Alpha Championship')).toBeInTheDocument();
     expect(screen.getByText('Beta Open')).toBeInTheDocument();

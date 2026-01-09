@@ -46,31 +46,31 @@ describe('filterPosters', () => {
   it('filters by white belt', () => {
     const result = filterPosters(posters, 'white');
     expect(result).toHaveLength(1);
-    expect(result[0].beltRank).toBe('White Belt');
+    expect(result[0]?.beltRank).toBe('White Belt');
   });
 
   it('filters by blue belt', () => {
     const result = filterPosters(posters, 'blue');
     expect(result).toHaveLength(1);
-    expect(result[0].beltRank).toBe('Blue Belt');
+    expect(result[0]?.beltRank).toBe('Blue Belt');
   });
 
   it('filters by purple belt', () => {
     const result = filterPosters(posters, 'purple');
     expect(result).toHaveLength(1);
-    expect(result[0].beltRank).toBe('Purple Belt');
+    expect(result[0]?.beltRank).toBe('Purple Belt');
   });
 
   it('filters by brown belt', () => {
     const result = filterPosters(posters, 'brown');
     expect(result).toHaveLength(1);
-    expect(result[0].beltRank).toBe('Brown Belt');
+    expect(result[0]?.beltRank).toBe('Brown Belt');
   });
 
   it('filters by black belt', () => {
     const result = filterPosters(posters, 'black');
     expect(result).toHaveLength(1);
-    expect(result[0].beltRank).toBe('Black Belt');
+    expect(result[0]?.beltRank).toBe('Black Belt');
   });
 
   it('returns empty array when no matches', () => {
