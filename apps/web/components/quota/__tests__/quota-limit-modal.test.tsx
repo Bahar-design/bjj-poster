@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QuotaLimitModal } from '../quota-limit-modal'
+import { track } from '@/lib/analytics'
 import type { Poster } from '@/lib/types/api'
 
 // Mock analytics
@@ -202,6 +203,94 @@ describe('QuotaLimitModal', () => {
       await user.click(screen.getByRole('button', { name: /maybe later/i }))
 
       expect(onMaybeLater).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('edge cases', () => {
+    it('shows generic message when posters array is empty', () => {
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={[]}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      expect(
+        screen.getByText(/you've hit your monthly limit/i)
+      ).toBeInTheDocument()
+    })
+
+    it('does not render poster gallery when posters array is empty', () => {
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={[]}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('analytics', () => {
+    it('tracks quota_limit_modal_viewed on mount', () => {
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={mockPosters}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      expect(track).toHaveBeenCalledWith('quota_limit_modal_viewed', {
+        postersCount: 2,
+        tier: 'free',
+      })
+    })
+
+    it('tracks quota_limit_upgrade_clicked on upgrade', async () => {
+      vi.useRealTimers()
+      const user = userEvent.setup()
+
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={mockPosters}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      await user.click(screen.getByRole('button', { name: /upgrade now/i }))
+
+      expect(track).toHaveBeenCalledWith('quota_limit_upgrade_clicked', {
+        source: 'quota_modal',
+      })
+    })
+
+    it('tracks quota_limit_maybe_later_clicked with next reset date', async () => {
+      vi.useRealTimers()
+      const user = userEvent.setup()
+
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={mockPosters}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      await user.click(screen.getByRole('button', { name: /maybe later/i }))
+
+      expect(track).toHaveBeenCalledWith('quota_limit_maybe_later_clicked', {
+        nextResetDate: 'February 1',
+      })
     })
   })
 })
