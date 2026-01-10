@@ -126,6 +126,45 @@ describe('QuotaLimitModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  describe('non-dismissibility', () => {
+    it('cannot be dismissed via ESC key', async () => {
+      vi.useRealTimers()
+      const user = userEvent.setup()
+
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={mockPosters}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+      await user.keyboard('{Escape}')
+
+      // Modal should still be present
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    it('does not have a close X button', () => {
+      render(
+        <QuotaLimitModal
+          open={true}
+          posters={mockPosters}
+          onUpgrade={vi.fn()}
+          onMaybeLater={vi.fn()}
+        />
+      )
+
+      // The default DialogContent includes a close button with sr-only "Close" text
+      // Our modal hides it with CSS
+      const closeButton = screen.queryByRole('button', { name: /close/i })
+      expect(closeButton).not.toBeInTheDocument()
+    })
+  })
+
   describe('button callbacks', () => {
     it('calls onUpgrade when upgrade button clicked', async () => {
       vi.useRealTimers() // Use real timers for this test
