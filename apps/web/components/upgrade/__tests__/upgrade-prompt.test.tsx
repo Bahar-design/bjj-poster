@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { UpgradePrompt } from '../upgrade-prompt'
+import { track } from '@/lib/analytics'
 
 // Mock analytics
 vi.mock('@/lib/analytics', () => ({
@@ -11,8 +12,8 @@ vi.mock('@/lib/analytics', () => ({
 
 // Mock next/link
 vi.mock('next/link', () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({ children, href, onClick }: { children: React.ReactNode; href: string; onClick?: () => void }) => (
+    <a href={href} onClick={onClick}>{children}</a>
   ),
 }))
 
@@ -130,6 +131,57 @@ describe('UpgradePrompt', () => {
       await user.click(closeButton)
 
       expect(onDismiss).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('analytics', () => {
+    it('tracks upgrade_prompt_viewed on mount', () => {
+      render(
+        <UpgradePrompt variant="banner" targetTier="pro" source="dashboard" />
+      )
+
+      expect(track).toHaveBeenCalledWith('upgrade_prompt_viewed', {
+        source: 'dashboard',
+        targetTier: 'pro',
+        variant: 'banner',
+      })
+    })
+
+    it('tracks upgrade_prompt_clicked on CTA click', async () => {
+      const user = userEvent.setup()
+      render(
+        <UpgradePrompt variant="card" targetTier="premium" source="sidebar" />
+      )
+
+      await user.click(screen.getByRole('link', { name: /upgrade now/i }))
+
+      expect(track).toHaveBeenCalledWith('upgrade_prompt_clicked', {
+        source: 'sidebar',
+        targetTier: 'premium',
+        variant: 'card',
+      })
+    })
+
+    it('tracks upgrade_prompt_dismissed on close', async () => {
+      const user = userEvent.setup()
+      const onDismiss = vi.fn()
+
+      render(
+        <UpgradePrompt
+          variant="banner"
+          targetTier="pro"
+          source="header"
+          onDismiss={onDismiss}
+        />
+      )
+
+      await user.click(screen.getByRole('button', { name: /close/i }))
+
+      expect(track).toHaveBeenCalledWith('upgrade_prompt_dismissed', {
+        source: 'header',
+        targetTier: 'pro',
+        variant: 'banner',
+      })
     })
   })
 })
