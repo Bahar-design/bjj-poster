@@ -7,7 +7,7 @@ import {
   TournamentInfoFields,
   TemplateSelector,
 } from '@/components/builder';
-import { GuidedTooltips, useBuilderTour } from '@/components/onboarding';
+import { GuidedTooltips, useBuilderTour, FirstPosterCelebration } from '@/components/onboarding';
 import { usePosterBuilderStore } from '@/lib/stores';
 import { GenerateButton } from './generate-button';
 import { FloatingPreviewButton } from './floating-preview-button';
@@ -65,6 +65,9 @@ export function PosterBuilderForm(): JSX.Element {
 
       {/* Preview Modal */}
       <PreviewModal />
+
+      {/* First Poster Celebration Modal */}
+      <FirstPosterCelebration />
 
       {/* Guided Tour for First-Time Users */}
       {!isLoading && (

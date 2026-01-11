@@ -4,7 +4,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GenerateButton } from '../generate-button';
 import { usePosterBuilderStore } from '@/lib/stores';
 import { useUserStore } from '@/lib/stores/user-store';
-import { useFirstPosterCelebration } from '@/components/onboarding';
 
 // Mock the store
 const createMockState = (overrides = {}) => ({
@@ -271,7 +270,13 @@ describe('GenerateButton', () => {
 
       vi.mocked(useUserStore).mockImplementation((selector) =>
         selector({
+          user: null,
+          subscriptionTier: 'free' as const,
           postersThisMonth: 0,
+          postersLimit: 3,
+          setUser: vi.fn(),
+          resetUser: vi.fn(),
+          canCreatePoster: vi.fn().mockReturnValue(true),
           incrementUsage: mockIncrementUsage,
         })
       );
@@ -315,7 +320,13 @@ describe('GenerateButton', () => {
 
       vi.mocked(useUserStore).mockImplementation((selector) =>
         selector({
+          user: null,
+          subscriptionTier: 'free' as const,
           postersThisMonth: 1,
+          postersLimit: 3,
+          setUser: vi.fn(),
+          resetUser: vi.fn(),
+          canCreatePoster: vi.fn().mockReturnValue(true),
           incrementUsage: mockIncrementUsage,
         })
       );
