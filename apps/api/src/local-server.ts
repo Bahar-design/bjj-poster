@@ -9,6 +9,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-l
 // Import handlers as they're created
 import { handler as helloHandler } from './handlers/hello/index.js';
 import { listTemplatesHandler } from './handlers/templates/index.js';
+import { createCheckoutSessionHandler, stripeWebhookHandler } from './handlers/payments/index.js';
 // import { handler as getProfile } from './handlers/user/get-profile';
 // import { handler as createPoster } from './handlers/poster/create-poster';
 
@@ -84,10 +85,8 @@ function createLambdaContext(): Context {
   };
 }
 
-type LambdaHandler = (
-  event: APIGatewayProxyEvent,
-  context: Context
-) => Promise<APIGatewayProxyResult>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LambdaHandler = any;
 
 /**
  * Wrap a Lambda handler to work with Express
@@ -162,6 +161,13 @@ app.get('/api/templates', lambdaAdapter(listTemplatesHandler));
 app.get('/api/posters', (req, res) => {
   res.json([]);
 });
+
+// Payments - Stripe integration
+app.post('/api/payments/checkout', lambdaAdapter(createCheckoutSessionHandler));
+
+// Stripe webhook - needs raw body for signature verification
+// Note: In production, this would be configured separately with raw body parsing
+app.post('/api/payments/webhook', lambdaAdapter(stripeWebhookHandler));
 
 // Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

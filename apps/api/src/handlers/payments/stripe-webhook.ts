@@ -1,6 +1,5 @@
 import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 import Stripe from 'stripe';
-import { getTierFromPriceId } from './price-config.js';
 
 function createResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
   return {
@@ -31,9 +30,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     return createResponse(400, { message: 'Missing request body' });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-11-20.acacia',
-  });
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
   let stripeEvent: Stripe.Event;
 
