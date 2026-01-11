@@ -17,7 +17,10 @@ export function getPriceId(tier: Tier, interval: Interval): string {
   const priceId = process.env[envKey];
 
   if (!priceId) {
-    throw new Error(`Missing price ID for ${tier}/${interval}: ${envKey} not set`);
+    // Log the specific env key server-side for debugging
+    console.error('Missing Stripe price configuration', { tier, interval, envKey });
+    // Return a generic message to clients (don't expose internal env var names)
+    throw new Error(`Missing price ID for ${tier}/${interval}`);
   }
 
   return priceId;

@@ -19,9 +19,10 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 // Use specific origin from env, fallback to localhost for development
 const CORS_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-// Simple in-memory cache for processed events (cleared on Lambda cold start)
-// For production, consider using DynamoDB with TTL for persistent idempotency
-const processedEvents = new Set<string>();
+// Validate HTTPS in production
+if (process.env.NODE_ENV === 'production' && !CORS_ORIGIN.startsWith('https://')) {
+  throw new Error('Production CORS origin must use HTTPS');
+}
 
 function createResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
   return {
@@ -68,35 +69,69 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     return createResponse(401, { message: 'Invalid signature' });
   }
 
-  // Idempotency check: skip if we've already processed this event
-  if (processedEvents.has(stripeEvent.id)) {
-    console.log('Duplicate webhook event, skipping', {
-      requestId,
-      eventId: stripeEvent.id,
-    });
-    return createResponse(200, { received: true, duplicate: true });
-  }
-
   console.log('Webhook event received', {
     requestId,
     type: stripeEvent.type,
     id: stripeEvent.id,
   });
 
+  // Idempotency check using DynamoDB (persistent across Lambda cold starts)
+  try {
+    const isDuplicate = await db.webhookEvents.checkAndMark(
+      stripeEvent.id,
+      stripeEvent.type
+    );
+
+    if (isDuplicate) {
+      console.log('Duplicate webhook event, skipping', {
+        requestId,
+        eventId: stripeEvent.id,
+      });
+      return createResponse(200, { received: true, duplicate: true });
+    }
+  } catch (error) {
+    // Log but don't fail - idempotency check failure shouldn't block processing
+    // The worst case is we process a duplicate, which should be handled gracefully
+    console.warn('Idempotency check failed, proceeding with caution', {
+      requestId,
+      eventId: stripeEvent.id,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+
   // Handle the event
   if (stripeEvent.type === 'checkout.session.completed') {
     const session = stripeEvent.data.object as Stripe.Checkout.Session;
 
     const userId = session.client_reference_id;
-    const subscriptionId = session.subscription as string;
-    const customerId = session.customer as string;
+    const subscriptionId = session.subscription;
+    const customerId = session.customer;
 
-    if (!userId) {
-      console.error('Missing client_reference_id in session', {
+    // Validate required fields
+    if (!userId || typeof userId !== 'string') {
+      console.error('Missing or invalid client_reference_id in session', {
         requestId,
         sessionId: session.id,
       });
       return createResponse(400, { message: 'Missing client_reference_id' });
+    }
+
+    if (!subscriptionId || typeof subscriptionId !== 'string') {
+      console.error('Missing or invalid subscription ID in session', {
+        requestId,
+        sessionId: session.id,
+        subscriptionId,
+      });
+      return createResponse(400, { message: 'Invalid subscription ID' });
+    }
+
+    if (!customerId || typeof customerId !== 'string') {
+      console.error('Missing or invalid customer ID in session', {
+        requestId,
+        sessionId: session.id,
+        customerId,
+      });
+      return createResponse(400, { message: 'Invalid customer ID' });
     }
 
     // Get tier from metadata first, fallback to price lookup
@@ -106,13 +141,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       tier = getTierFromPriceId(session.line_items.data[0].price.id) as SubscriptionTier;
     }
 
-    // Default to pro if we can't determine the tier
+    // Fail if we can't determine the tier - this indicates a data integrity issue
     if (!tier) {
-      console.warn('Could not determine tier, defaulting to pro', {
+      console.error('Could not determine subscription tier', {
         requestId,
         sessionId: session.id,
+        metadata: session.metadata,
       });
-      tier = 'pro';
+      // Remove from idempotency cache so Stripe can retry
+      await db.webhookEvents.remove(stripeEvent.id).catch(() => {});
+      return createResponse(400, { message: 'Could not determine subscription tier' });
     }
 
     console.log('Processing subscription upgrade', {
@@ -136,9 +174,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         userId,
         tier,
       });
-
-      // Mark event as processed for idempotency
-      processedEvents.add(stripeEvent.id);
     } catch (error) {
       console.error('Failed to update subscription in database', {
         requestId,
@@ -146,6 +181,17 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
       });
+
+      // Remove from idempotency cache so Stripe can retry
+      try {
+        await db.webhookEvents.remove(stripeEvent.id);
+      } catch (removeError) {
+        console.warn('Failed to remove event from idempotency cache', {
+          requestId,
+          eventId: stripeEvent.id,
+        });
+      }
+
       // Return 500 so Stripe will retry
       return createResponse(500, { message: 'Failed to process subscription' });
     }

@@ -14,6 +14,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 // Use specific origin from env, fallback to localhost for development
 const CORS_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+// Validate HTTPS in production
+if (process.env.NODE_ENV === 'production' && !CORS_ORIGIN.startsWith('https://')) {
+  throw new Error('Production CORS origin must use HTTPS');
+}
+
 function createResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
   return {
     statusCode,
@@ -83,6 +88,16 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         interval,
       },
     });
+
+    // Validate session URL exists (can be null if session is expired or already used)
+    if (!session.url) {
+      console.error('Checkout session URL is null', {
+        requestId,
+        sessionId: session.id,
+        status: session.status,
+      });
+      return createResponse(500, { message: 'Failed to create checkout session' });
+    }
 
     console.log('Checkout session created', {
       requestId,

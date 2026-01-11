@@ -26,9 +26,15 @@ export type {
   UpdateSubscriptionInput,
 } from './entities/user.js';
 
+export type {
+  WebhookEvent,
+  WebhookEventItem,
+} from './entities/webhook-event.js';
+
 // Re-export repository classes (for testing/DI)
 export { TemplateRepository } from './repositories/template-repository.js';
 export { UserRepository } from './repositories/user-repository.js';
+export { WebhookEventRepository } from './repositories/webhook-event-repository.js';
 
 // Re-export client and config
 export { dynamoClient } from './client.js';
@@ -43,9 +49,11 @@ export { TABLE_NAME, GSI_NAMES } from './config.js';
 import { dynamoClient } from './client.js';
 import { TemplateRepository } from './repositories/template-repository.js';
 import { UserRepository } from './repositories/user-repository.js';
+import { WebhookEventRepository } from './repositories/webhook-event-repository.js';
 
 export const db = {
   templates: new TemplateRepository(dynamoClient),
   users: new UserRepository(dynamoClient),
+  webhookEvents: new WebhookEventRepository(dynamoClient),
   // posters: new PosterRepository(dynamoClient),
 };

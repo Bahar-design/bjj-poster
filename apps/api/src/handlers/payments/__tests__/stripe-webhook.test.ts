@@ -23,6 +23,10 @@ vi.mock('@bjj-poster/db', () => ({
     users: {
       updateSubscription: vi.fn().mockResolvedValue(undefined),
     },
+    webhookEvents: {
+      checkAndMark: vi.fn().mockResolvedValue(false), // Not a duplicate by default
+      remove: vi.fn().mockResolvedValue(undefined),
+    },
   },
 }));
 
@@ -35,8 +39,10 @@ vi.mock('../price-config.js', () => ({
 import { handler } from '../stripe-webhook.js';
 import { db } from '@bjj-poster/db';
 
-// Get reference to the mocked function for assertions
+// Get reference to the mocked functions for assertions
 const mockUpdateSubscription = vi.mocked(db.users.updateSubscription);
+const mockCheckAndMark = vi.mocked(db.webhookEvents.checkAndMark);
+const mockRemoveEvent = vi.mocked(db.webhookEvents.remove);
 
 function createEvent(overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent {
   return {
@@ -189,20 +195,174 @@ describe('stripeWebhook handler', () => {
       },
     });
 
+    // Simulate duplicate detection from DynamoDB
+    mockCheckAndMark.mockResolvedValueOnce(true);
+
     const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
 
-    // First call
-    const result1 = await handler(event, mockContext, () => {});
-    expect(result1.statusCode).toBe(200);
-    expect(mockUpdateSubscription).toHaveBeenCalledTimes(1);
+    expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.duplicate).toBe(true);
 
-    // Second call with same event ID
-    const result2 = await handler(event, mockContext, () => {});
-    expect(result2.statusCode).toBe(200);
-    const body2 = JSON.parse(result2.body);
-    expect(body2.duplicate).toBe(true);
+    // db should not be called for duplicates
+    expect(mockUpdateSubscription).not.toHaveBeenCalled();
+  });
 
-    // db should only be called once
-    expect(mockUpdateSubscription).toHaveBeenCalledTimes(1);
+  it('returns 400 when client_reference_id is missing', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_no_user',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: null,
+          subscription: 'sub_123',
+          customer: 'cus_123',
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.message).toContain('client_reference_id');
+  });
+
+  it('returns 400 when subscription ID is missing', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_no_sub',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: null,
+          customer: 'cus_123',
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.message).toContain('subscription');
+  });
+
+  it('returns 400 when customer ID is missing', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_no_cust',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: 'sub_123',
+          customer: null,
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.message).toContain('customer');
+  });
+
+  it('returns 400 when tier cannot be determined', async () => {
+    // Import the mocked getTierFromPriceId to control it
+    const { getTierFromPriceId } = await import('../price-config.js');
+    const mockGetTier = vi.mocked(getTierFromPriceId);
+
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_no_tier',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: 'sub_123',
+          customer: 'cus_123',
+          metadata: {}, // No tier in metadata
+          line_items: {
+            data: [{ price: { id: 'price_unknown' } }],
+          },
+        },
+      },
+    });
+
+    // getTierFromPriceId returns null for unknown price
+    mockGetTier.mockReturnValueOnce(null);
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.message).toContain('tier');
+
+    // Should remove from idempotency cache so Stripe can retry
+    expect(mockRemoveEvent).toHaveBeenCalledWith('evt_no_tier');
+  });
+
+  it('removes event from idempotency cache on db failure', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_db_fail',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: 'sub_123',
+          customer: 'cus_123',
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    mockUpdateSubscription.mockRejectedValueOnce(new Error('DynamoDB error'));
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(500);
+
+    // Should remove from idempotency cache so Stripe can retry
+    expect(mockRemoveEvent).toHaveBeenCalledWith('evt_db_fail');
+  });
+
+  it('continues processing if idempotency check fails', async () => {
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_idemp_fail',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: 'sub_123',
+          customer: 'cus_123',
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    // Idempotency check throws
+    mockCheckAndMark.mockRejectedValueOnce(new Error('DynamoDB error'));
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    // Should still process successfully
+    expect(result.statusCode).toBe(200);
+    expect(mockUpdateSubscription).toHaveBeenCalled();
   });
 });

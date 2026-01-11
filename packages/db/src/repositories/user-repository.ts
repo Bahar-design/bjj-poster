@@ -39,7 +39,24 @@ export class UserRepository {
   }
 
   /**
-   * Update user subscription after successful Stripe checkout
+   * Update user subscription after successful Stripe checkout.
+   *
+   * This is an upsert-style operation that updates the subscription fields
+   * on an existing user record. The operation is idempotent - calling it
+   * multiple times with the same input will produce the same result.
+   *
+   * @param userId - The Cognito user ID (sub claim)
+   * @param input - Subscription details including tier, Stripe IDs
+   * @throws Error if DynamoDB update fails
+   *
+   * @example
+   * ```typescript
+   * await db.users.updateSubscription('user-123', {
+   *   tier: 'pro',
+   *   stripeSubscriptionId: 'sub_xxx',
+   *   stripeCustomerId: 'cus_xxx',
+   * });
+   * ```
    */
   async updateSubscription(
     userId: string,
