@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Download, Facebook, Share2, ArrowRight } from 'lucide-react';
+import { Download, Facebook, Share2, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFirstPosterCelebration } from './use-first-poster-celebration';
 import { useUserStore } from '@/lib/stores/user-store';
@@ -16,7 +16,12 @@ export function FirstPosterCelebration(): JSX.Element | null {
   const postersThisMonth = useUserStore((s) => s.postersThisMonth);
   const postersLimit = useUserStore((s) => s.postersLimit);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [showCopied, setShowCopied] = useState(false);
 
+  // NOTE: postersThisMonth is 0 here because incrementUsage() is called on dismiss,
+  // not on generation. This ensures the celebration modal can show accurate quota
+  // info (remaining = limit - current) before the count is incremented.
   const postersRemaining = postersLimit - postersThisMonth;
   const showUpsell = subscriptionTier === 'free';
 
@@ -31,14 +36,18 @@ export function FirstPosterCelebration(): JSX.Element | null {
     if (!posterData?.imageUrl || isDownloading) return;
 
     setIsDownloading(true);
+    setDownloadError(null);
     try {
       const response = await fetch(posterData.imageUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'tournament-poster.png';
+      link.download = `poster-${posterData.posterId}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -48,6 +57,7 @@ export function FirstPosterCelebration(): JSX.Element | null {
       track('first_poster_downloaded', { tier: subscriptionTier });
     } catch (error) {
       console.error('Download failed:', error);
+      setDownloadError('Download failed. Please try again or proceed to dashboard.');
       // Still mark as downloaded so user can proceed
       markDownloaded();
     } finally {
@@ -76,9 +86,11 @@ export function FirstPosterCelebration(): JSX.Element | null {
       }
     }
 
-    // Fallback: copy link
+    // Fallback: copy link with visual feedback
     try {
       await navigator.clipboard.writeText(posterData.imageUrl);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
       track('first_poster_shared', { platform: 'copy_link', tier: subscriptionTier });
     } catch (error) {
       console.error('Copy failed:', error);
@@ -163,25 +175,38 @@ export function FirstPosterCelebration(): JSX.Element | null {
           {isDownloading ? 'Downloading...' : 'Download Poster'}
         </Button>
 
+        {/* Download Error Message */}
+        {downloadError && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-sm text-red-400">
+            <AlertCircle className="h-4 w-4" />
+            <span>{downloadError}</span>
+          </div>
+        )}
+
         {/* Social Share (after download) */}
         {hasDownloaded && (
-          <div className="mt-4 flex justify-center gap-3">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleFacebookShare}
-              aria-label="Share on Facebook"
-            >
-              <Facebook className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleShare}
-              aria-label="Share"
-            >
-              <Share2 className="h-5 w-5" />
-            </Button>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleFacebookShare}
+                aria-label="Share on Facebook"
+              >
+                <Facebook className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleShare}
+                aria-label="Share"
+              >
+                {showCopied ? <Check className="h-5 w-5 text-green-500" /> : <Share2 className="h-5 w-5" />}
+              </Button>
+            </div>
+            {showCopied && (
+              <span className="text-sm text-green-500">Link copied to clipboard!</span>
+            )}
           </div>
         )}
 
@@ -208,6 +233,17 @@ export function FirstPosterCelebration(): JSX.Element | null {
             Go to Dashboard
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
+        )}
+
+        {/* Skip option for users on metered connections */}
+        {!hasDownloaded && (
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="mt-6 text-xs text-surface-500 transition-colors hover:text-surface-400"
+          >
+            Skip for now (poster saved to dashboard)
+          </button>
         )}
       </div>
     </div>

@@ -89,4 +89,20 @@ describe('useFirstPosterCelebration', () => {
     expect(mockIncrementUsage).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/dashboard');
   });
+
+  it('prevents duplicate triggers (race condition protection)', () => {
+    const { result } = renderHook(() => useFirstPosterCelebration());
+    const posterData1 = { imageUrl: '/test1.png', posterId: '123' };
+    const posterData2 = { imageUrl: '/test2.png', posterId: '456' };
+
+    // Trigger twice rapidly
+    act(() => {
+      result.current.triggerCelebration(posterData1);
+      result.current.triggerCelebration(posterData2);
+    });
+
+    // Should only show first trigger
+    expect(result.current.showCelebration).toBe(true);
+    expect(result.current.posterData).toEqual(posterData1);
+  });
 });

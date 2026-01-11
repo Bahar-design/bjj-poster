@@ -194,4 +194,33 @@ describe('FirstPosterCelebration', () => {
     expect(screen.getByLabelText(/share on facebook/i)).toBeInTheDocument();
     expect(screen.getByLabelText('Share')).toBeInTheDocument();
   });
+
+  it('shows skip button before download', () => {
+    render(<FirstPosterCelebration />);
+
+    expect(screen.getByRole('button', { name: /skip for now/i })).toBeInTheDocument();
+  });
+
+  it('hides skip button after download', () => {
+    mockUseFirstPosterCelebration.mockReturnValue({
+      showCelebration: true,
+      posterData: { imageUrl: '/test-poster.png', posterId: '123' },
+      hasDownloaded: true,
+      triggerCelebration: mockTriggerCelebration,
+      markDownloaded: mockMarkDownloaded,
+      dismiss: mockDismiss,
+    });
+
+    render(<FirstPosterCelebration />);
+
+    expect(screen.queryByRole('button', { name: /skip for now/i })).not.toBeInTheDocument();
+  });
+
+  it('calls dismiss when skip is clicked', () => {
+    render(<FirstPosterCelebration />);
+
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+
+    expect(mockDismiss).toHaveBeenCalled();
+  });
 });

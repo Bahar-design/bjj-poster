@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/lib/stores/user-store';
 
@@ -24,26 +24,23 @@ export function useFirstPosterCelebration(): UseFirstPosterCelebrationReturn {
   const [showCelebration, setShowCelebration] = useState(false);
   const [posterData, setPosterData] = useState<PosterData | null>(null);
   const [hasDownloaded, setHasDownloaded] = useState(false);
-  const [hasSeenBefore, setHasSeenBefore] = useState(false);
   const router = useRouter();
 
-  // Check localStorage on mount
-  useEffect(() => {
-    const seen = localStorage.getItem(STORAGE_KEY);
-    setHasSeenBefore(seen === 'true');
-  }, []);
+  // Ref to prevent race conditions with rapid triggers or multiple tabs
+  const isShowingRef = useRef(false);
 
-  const triggerCelebration = useCallback(
-    (data: PosterData): void => {
-      // Don't show if already seen
-      if (hasSeenBefore || localStorage.getItem(STORAGE_KEY) === 'true') {
-        return;
-      }
-      setPosterData(data);
-      setShowCelebration(true);
-    },
-    [hasSeenBefore]
-  );
+  const triggerCelebration = useCallback((data: PosterData): void => {
+    // Single source of truth: always check localStorage directly
+    // Also check ref to prevent duplicate triggers in same session
+    if (isShowingRef.current || localStorage.getItem(STORAGE_KEY) === 'true') {
+      return;
+    }
+
+    // Mark as showing before state update to prevent race conditions
+    isShowingRef.current = true;
+    setPosterData(data);
+    setShowCelebration(true);
+  }, []);
 
   const markDownloaded = useCallback((): void => {
     setHasDownloaded(true);
@@ -51,6 +48,7 @@ export function useFirstPosterCelebration(): UseFirstPosterCelebrationReturn {
 
   const dismiss = useCallback((): void => {
     localStorage.setItem(STORAGE_KEY, 'true');
+    isShowingRef.current = false;
     setShowCelebration(false);
     setPosterData(null);
     setHasDownloaded(false);
