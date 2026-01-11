@@ -37,6 +37,6 @@ export interface UserItem {
 
 export interface UpdateSubscriptionInput {
   tier: SubscriptionTier;
-  stripeSubscriptionId: string;
+  stripeSubscriptionId: string | null;
   stripeCustomerId?: string;
 }

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
-// Use vi.hoisted to create mock function before vi.mock hoisting
-const { mockConstructEvent } = vi.hoisted(() => ({
+// Use vi.hoisted to create mock functions before vi.mock hoisting
+const { mockConstructEvent, mockSubscriptionsRetrieve } = vi.hoisted(() => ({
   mockConstructEvent: vi.fn(),
+  mockSubscriptionsRetrieve: vi.fn(),
 }));
 
 // Mock Stripe before importing handler
@@ -12,6 +13,9 @@ vi.mock('stripe', () => {
     default: vi.fn().mockImplementation(() => ({
       webhooks: {
         constructEvent: mockConstructEvent,
+      },
+      subscriptions: {
+        retrieve: mockSubscriptionsRetrieve,
       },
     })),
   };
@@ -22,6 +26,7 @@ vi.mock('@bjj-poster/db', () => ({
   db: {
     users: {
       updateSubscription: vi.fn().mockResolvedValue(undefined),
+      getByStripeSubscriptionId: vi.fn().mockResolvedValue(null),
     },
     webhookEvents: {
       checkAndMark: vi.fn().mockResolvedValue(false), // Not a duplicate by default
@@ -177,7 +182,7 @@ describe('stripeWebhook handler', () => {
 
     expect(result.statusCode).toBe(500);
     const body = JSON.parse(result.body);
-    expect(body.message).toContain('Failed to process subscription');
+    expect(body.message).toContain('Failed to process webhook');
   });
 
   it('skips duplicate events (idempotency)', async () => {
@@ -209,7 +214,7 @@ describe('stripeWebhook handler', () => {
     expect(mockUpdateSubscription).not.toHaveBeenCalled();
   });
 
-  it('returns 400 when client_reference_id is missing', async () => {
+  it('returns 500 when client_reference_id is missing', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_no_user',
       type: 'checkout.session.completed',
@@ -227,12 +232,15 @@ describe('stripeWebhook handler', () => {
     const event = createEvent();
     const result = await handler(event, mockContext, () => {});
 
-    expect(result.statusCode).toBe(400);
+    // Validation errors are caught and returned as 500 (allows Stripe retry)
+    expect(result.statusCode).toBe(500);
     const body = JSON.parse(result.body);
-    expect(body.message).toContain('client_reference_id');
+    expect(body.code).toBe('PROCESSING_ERROR');
+    // Event should be removed from idempotency cache
+    expect(mockRemoveEvent).toHaveBeenCalledWith('evt_no_user');
   });
 
-  it('returns 400 when subscription ID is missing', async () => {
+  it('returns 500 when subscription ID is missing', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_no_sub',
       type: 'checkout.session.completed',
@@ -250,12 +258,13 @@ describe('stripeWebhook handler', () => {
     const event = createEvent();
     const result = await handler(event, mockContext, () => {});
 
-    expect(result.statusCode).toBe(400);
+    expect(result.statusCode).toBe(500);
     const body = JSON.parse(result.body);
-    expect(body.message).toContain('subscription');
+    expect(body.code).toBe('PROCESSING_ERROR');
+    expect(mockRemoveEvent).toHaveBeenCalledWith('evt_no_sub');
   });
 
-  it('returns 400 when customer ID is missing', async () => {
+  it('returns 500 when customer ID is missing', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_no_cust',
       type: 'checkout.session.completed',
@@ -273,12 +282,13 @@ describe('stripeWebhook handler', () => {
     const event = createEvent();
     const result = await handler(event, mockContext, () => {});
 
-    expect(result.statusCode).toBe(400);
+    expect(result.statusCode).toBe(500);
     const body = JSON.parse(result.body);
-    expect(body.message).toContain('customer');
+    expect(body.code).toBe('PROCESSING_ERROR');
+    expect(mockRemoveEvent).toHaveBeenCalledWith('evt_no_cust');
   });
 
-  it('returns 400 when tier cannot be determined', async () => {
+  it('returns 500 when tier cannot be determined', async () => {
     // Import the mocked getTierFromPriceId to control it
     const { getTierFromPriceId } = await import('../price-config.js');
     const mockGetTier = vi.mocked(getTierFromPriceId);
@@ -293,11 +303,13 @@ describe('stripeWebhook handler', () => {
           subscription: 'sub_123',
           customer: 'cus_123',
           metadata: {}, // No tier in metadata
-          line_items: {
-            data: [{ price: { id: 'price_unknown' } }],
-          },
         },
       },
+    });
+
+    // Mock subscription retrieve to return a subscription without tier
+    mockSubscriptionsRetrieve.mockResolvedValueOnce({
+      items: { data: [{ price: { id: 'price_unknown' } }] },
     });
 
     // getTierFromPriceId returns null for unknown price
@@ -306,9 +318,9 @@ describe('stripeWebhook handler', () => {
     const event = createEvent();
     const result = await handler(event, mockContext, () => {});
 
-    expect(result.statusCode).toBe(400);
+    expect(result.statusCode).toBe(500);
     const body = JSON.parse(result.body);
-    expect(body.message).toContain('tier');
+    expect(body.code).toBe('PROCESSING_ERROR');
 
     // Should remove from idempotency cache so Stripe can retry
     expect(mockRemoveEvent).toHaveBeenCalledWith('evt_no_tier');
@@ -340,7 +352,7 @@ describe('stripeWebhook handler', () => {
     expect(mockRemoveEvent).toHaveBeenCalledWith('evt_db_fail');
   });
 
-  it('continues processing if idempotency check fails', async () => {
+  it('returns 500 if idempotency check fails', async () => {
     mockConstructEvent.mockReturnValue({
       id: 'evt_idemp_fail',
       type: 'checkout.session.completed',
@@ -361,7 +373,40 @@ describe('stripeWebhook handler', () => {
     const event = createEvent();
     const result = await handler(event, mockContext, () => {});
 
-    // Should still process successfully
+    // Should return 500 to prevent duplicate processing (PR review fix #3)
+    expect(result.statusCode).toBe(500);
+    const body = JSON.parse(result.body);
+    expect(body.code).toBe('IDEMPOTENCY_ERROR');
+
+    // Should not process the event
+    expect(mockUpdateSubscription).not.toHaveBeenCalled();
+  });
+
+  it('handles base64 encoded body from API Gateway', async () => {
+    const bodyContent = JSON.stringify({ type: 'checkout.session.completed' });
+    const base64Body = Buffer.from(bodyContent).toString('base64');
+
+    mockConstructEvent.mockReturnValue({
+      id: 'evt_base64_test',
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          id: 'cs_test_123',
+          client_reference_id: 'user-123',
+          subscription: 'sub_123',
+          customer: 'cus_123',
+          metadata: { tier: 'pro' },
+        },
+      },
+    });
+
+    const event = createEvent({
+      body: base64Body,
+      isBase64Encoded: true,
+    });
+
+    const result = await handler(event, mockContext, () => {});
+
     expect(result.statusCode).toBe(200);
     expect(mockUpdateSubscription).toHaveBeenCalled();
   });

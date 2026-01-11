@@ -1,6 +1,8 @@
 import type { APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda';
 import Stripe from 'stripe';
+import { db } from '@bjj-poster/db';
 import { createCheckoutSchema } from './types.js';
+import type { PaymentErrorResponse } from './types.js';
 import { getPriceId } from './price-config.js';
 
 // Validate required environment variables at module load time
@@ -19,45 +21,113 @@ if (process.env.NODE_ENV === 'production' && !CORS_ORIGIN.startsWith('https://')
   throw new Error('Production CORS origin must use HTTPS');
 }
 
+// Rate limiting: 5 checkout sessions per user per hour
+const RATE_LIMIT = 5;
+const RATE_LIMIT_WINDOW_SECONDS = 3600; // 1 hour
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': CORS_ORIGIN,
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400', // 24 hours
+};
+
 function createResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
   return {
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': CORS_ORIGIN,
+      ...CORS_HEADERS,
     },
     body: JSON.stringify(body),
   };
 }
 
+function createErrorResponse(
+  statusCode: number,
+  message: string,
+  code?: string
+): APIGatewayProxyResult {
+  const body: PaymentErrorResponse = { message };
+  if (code) body.code = code;
+  return createResponse(statusCode, body);
+}
+
 export const handler: APIGatewayProxyHandler = async (event) => {
   const requestId = event.requestContext.requestId;
+
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: CORS_HEADERS,
+      body: '',
+    };
+  }
 
   console.log('CreateCheckoutSession handler invoked', { requestId });
 
   // Check authentication
   const userId = event.requestContext.authorizer?.claims?.sub;
   if (!userId) {
-    return createResponse(401, { message: 'Unauthorized' });
+    return createErrorResponse(401, 'Unauthorized', 'UNAUTHORIZED');
+  }
+
+  // Rate limiting
+  try {
+    const rateCheck = await db.rateLimits.checkAndIncrement(
+      `checkout:${userId}`,
+      RATE_LIMIT,
+      RATE_LIMIT_WINDOW_SECONDS
+    );
+
+    if (!rateCheck.allowed) {
+      console.warn('Rate limit exceeded for checkout', {
+        requestId,
+        userId,
+        resetAt: new Date(rateCheck.resetAt * 1000).toISOString(),
+      });
+      return {
+        statusCode: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rateCheck.resetAt - Math.floor(Date.now() / 1000)),
+          ...CORS_HEADERS,
+        },
+        body: JSON.stringify({
+          message: 'Too many checkout attempts. Please try again later.',
+          code: 'RATE_LIMIT_EXCEEDED',
+          resetAt: rateCheck.resetAt,
+        }),
+      };
+    }
+  } catch (error) {
+    // Log but don't fail - rate limit check failure shouldn't block checkout
+    console.warn('Rate limit check failed, proceeding', {
+      requestId,
+      userId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 
   // Parse and validate body
   if (!event.body) {
-    return createResponse(400, { message: 'Request body is required' });
+    return createErrorResponse(400, 'Request body is required', 'MISSING_BODY');
   }
 
   let parsedBody: unknown;
   try {
     parsedBody = JSON.parse(event.body);
   } catch {
-    return createResponse(400, { message: 'Invalid JSON body' });
+    return createErrorResponse(400, 'Invalid JSON body', 'INVALID_JSON');
   }
 
   const validation = createCheckoutSchema.safeParse(parsedBody);
   if (!validation.success) {
     return createResponse(400, {
       message: 'Invalid request',
-      errors: validation.error.issues,
+      code: 'VALIDATION_ERROR',
+      details: validation.error.issues,
     });
   }
 
@@ -96,7 +166,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         sessionId: session.id,
         status: session.status,
       });
-      return createResponse(500, { message: 'Failed to create checkout session' });
+      return createErrorResponse(500, 'Failed to create checkout session', 'SESSION_URL_MISSING');
     }
 
     console.log('Checkout session created', {
@@ -116,9 +186,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     });
 
     if (error instanceof Error && error.message.includes('Missing price ID')) {
-      return createResponse(400, { message: error.message });
+      return createErrorResponse(400, error.message, 'MISSING_PRICE_ID');
     }
 
-    return createResponse(500, { message: 'Failed to create checkout session' });
+    return createErrorResponse(500, 'Failed to create checkout session', 'CHECKOUT_FAILED');
   }
 };

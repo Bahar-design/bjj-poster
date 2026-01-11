@@ -17,6 +17,19 @@ vi.mock('stripe', () => {
   };
 });
 
+// Mock db for rate limiting
+vi.mock('@bjj-poster/db', () => ({
+  db: {
+    rateLimits: {
+      checkAndIncrement: vi.fn().mockResolvedValue({
+        allowed: true,
+        remaining: 4,
+        resetAt: Math.floor(Date.now() / 1000) + 3600,
+      }),
+    },
+  },
+}));
+
 // Mock price config
 vi.mock('../price-config.js', () => ({
   getPriceId: vi.fn().mockReturnValue('price_pro_monthly'),
@@ -24,6 +37,9 @@ vi.mock('../price-config.js', () => ({
 
 // Import after mocks and env setup
 import { handler } from '../create-checkout-session.js';
+import { db } from '@bjj-poster/db';
+
+const mockCheckAndIncrement = vi.mocked(db.rateLimits.checkAndIncrement);
 
 function createEvent(overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent {
   return {
@@ -105,5 +121,39 @@ describe('createCheckoutSession handler', () => {
     const result = await handler(event, mockContext, () => {});
 
     expect(result.statusCode).toBe(400);
+  });
+
+  it('handles OPTIONS preflight request', async () => {
+    const event = createEvent({ httpMethod: 'OPTIONS' });
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(204);
+    expect(result.headers?.['Access-Control-Allow-Methods']).toContain('POST');
+    expect(result.headers?.['Access-Control-Allow-Headers']).toContain('Authorization');
+  });
+
+  it('returns 429 when rate limit exceeded', async () => {
+    const resetAt = Math.floor(Date.now() / 1000) + 3600;
+    mockCheckAndIncrement.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      resetAt,
+    });
+
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(429);
+    expect(result.headers?.['Retry-After']).toBeDefined();
+    const body = JSON.parse(result.body);
+    expect(body.code).toBe('RATE_LIMIT_EXCEEDED');
+  });
+
+  it('includes CORS headers in response', async () => {
+    const event = createEvent();
+    const result = await handler(event, mockContext, () => {});
+
+    expect(result.statusCode).toBe(200);
+    expect(result.headers?.['Access-Control-Allow-Origin']).toBeDefined();
   });
 });
