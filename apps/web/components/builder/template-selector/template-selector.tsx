@@ -71,7 +71,7 @@ export function TemplateSelector(): JSX.Element {
   }
 
   return (
-    <div className="space-y-6">
+    <div data-tour="template-selector" className="space-y-6">
       <section aria-labelledby="recommended-heading">
         <h3 id="recommended-heading" className="mb-4 text-lg font-semibold text-white">
           Recommended for you

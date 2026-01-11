@@ -73,17 +73,19 @@ export function GenerateButton(): JSX.Element {
   );
 
   const button = (
-    <Button
-      size="xl"
-      disabled={isDisabled}
-      onClick={handleClick}
-      className={cn(
-        'group w-full',
-        isValid && !isGenerating && 'animate-pulse-gold'
-      )}
-    >
-      {buttonContent}
-    </Button>
+    <div data-tour="generate-button">
+      <Button
+        size="xl"
+        disabled={isDisabled}
+        onClick={handleClick}
+        className={cn(
+          'group w-full',
+          isValid && !isGenerating && 'animate-pulse-gold'
+        )}
+      >
+        {buttonContent}
+      </Button>
+    </div>
   );
 
   // Wrap disabled button in tooltip
