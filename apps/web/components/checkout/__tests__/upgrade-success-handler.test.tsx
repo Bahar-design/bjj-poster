@@ -46,7 +46,22 @@ describe('UpgradeSuccessHandler', () => {
     expect(mockReplace).toHaveBeenCalled();
   });
 
-  it('shows info toast when upgrade=cancelled', async () => {
+  it('shows info toast when upgrade=canceled (US spelling)', async () => {
+    (useSearchParams as ReturnType<typeof vi.fn>).mockReturnValue({
+      get: (key: string) => (key === 'upgrade' ? 'canceled' : null),
+    });
+
+    render(<UpgradeSuccessHandler />);
+
+    await waitFor(() => {
+      expect(toast.info).toHaveBeenCalledWith(
+        expect.stringContaining('canceled'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  it('shows info toast when upgrade=cancelled (UK spelling)', async () => {
     (useSearchParams as ReturnType<typeof vi.fn>).mockReturnValue({
       get: (key: string) => (key === 'upgrade' ? 'cancelled' : null),
     });
@@ -55,7 +70,7 @@ describe('UpgradeSuccessHandler', () => {
 
     await waitFor(() => {
       expect(toast.info).toHaveBeenCalledWith(
-        expect.stringContaining('cancelled'),
+        expect.stringContaining('canceled'),
         expect.any(Object)
       );
     });

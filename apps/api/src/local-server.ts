@@ -16,7 +16,11 @@ import { createCheckoutSessionHandler, stripeWebhookHandler } from './handlers/p
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Stripe webhook needs raw body for signature verification
+// Must be registered BEFORE express.json() middleware
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
+// JSON parsing for all other routes
 app.use(express.json());
 app.use((req, res, next) => {
   // CORS for local development
@@ -40,13 +44,24 @@ app.use((req, _res, next) => {
  * Adapter to convert Express request to Lambda event format
  */
 function createLambdaEvent(req: Request): APIGatewayProxyEvent {
+  // Handle body: if Buffer (from express.raw), convert to string
+  // Otherwise JSON.stringify for regular parsed JSON
+  let body: string | null = null;
+  if (req.body) {
+    if (Buffer.isBuffer(req.body)) {
+      body = req.body.toString('utf-8');
+    } else {
+      body = JSON.stringify(req.body);
+    }
+  }
+
   return {
     httpMethod: req.method,
     path: req.path,
     pathParameters: req.params,
     queryStringParameters: req.query as Record<string, string>,
     headers: req.headers as Record<string, string>,
-    body: req.body ? JSON.stringify(req.body) : null,
+    body,
     isBase64Encoded: false,
     requestContext: {
       requestId: `local-${Date.now()}`,
@@ -165,8 +180,7 @@ app.get('/api/posters', (_req, res) => {
 // Payments - Stripe integration
 app.post('/api/payments/checkout', lambdaAdapter(createCheckoutSessionHandler));
 
-// Stripe webhook - needs raw body for signature verification
-// Note: In production, this would be configured separately with raw body parsing
+// Stripe webhook (raw body parsing configured above for signature verification)
 app.post('/api/payments/webhook', lambdaAdapter(stripeWebhookHandler));
 
 // Error handler

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { handler } from '../create-checkout-session.js';
 
 // Mock Stripe
 vi.mock('stripe', () => {
@@ -22,6 +21,9 @@ vi.mock('stripe', () => {
 vi.mock('../price-config.js', () => ({
   getPriceId: vi.fn().mockReturnValue('price_pro_monthly'),
 }));
+
+// Import after mocks and env setup
+import { handler } from '../create-checkout-session.js';
 
 function createEvent(overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent {
   return {
@@ -64,8 +66,6 @@ const mockContext: Context = {
 describe('createCheckoutSession handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
-    process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
   });
 
   it('creates checkout session with valid request', async () => {

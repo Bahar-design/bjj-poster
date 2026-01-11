@@ -33,9 +33,10 @@ export function UpgradeSuccessHandler() {
 
       // Clear URL params
       router.replace(pathname);
-    } else if (upgradeStatus === 'cancelled') {
+    } else if (upgradeStatus === 'canceled' || upgradeStatus === 'cancelled') {
+      // Support both US (canceled) and UK (cancelled) spellings
       hasHandled.current = true;
-      toast.info('Upgrade cancelled', {
+      toast.info('Upgrade canceled', {
         description: 'You can try again anytime.',
         duration: 4000,
       });

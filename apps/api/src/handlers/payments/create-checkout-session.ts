@@ -3,12 +3,23 @@ import Stripe from 'stripe';
 import { createCheckoutSchema } from './types.js';
 import { getPriceId } from './price-config.js';
 
+// Validate required environment variables at module load time
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+// Initialize Stripe SDK at module scope for reuse across Lambda warm invocations
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Use specific origin from env, fallback to localhost for development
+const CORS_ORIGIN = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 function createResponse(statusCode: number, body: unknown): APIGatewayProxyResult {
   return {
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': CORS_ORIGIN,
     },
     body: JSON.stringify(body),
   };
@@ -47,11 +58,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
   const { tier, interval } = validation.data;
 
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  // Get user email from auth claims (optional but improves UX)
+  const userEmail = event.requestContext.authorizer?.claims?.email as string | undefined;
 
+  try {
     const priceId = getPriceId(tier, interval);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -63,8 +74,9 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         },
       ],
       client_reference_id: userId,
-      success_url: `${appUrl}/dashboard?upgrade=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/pricing?upgrade=cancelled`,
+      customer_email: userEmail,
+      success_url: `${CORS_ORIGIN}/dashboard?upgrade=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${CORS_ORIGIN}/pricing?upgrade=canceled`,
       metadata: {
         userId,
         tier,
@@ -81,7 +93,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 
     return createResponse(200, { url: session.url });
   } catch (error) {
-    console.error('Failed to create checkout session', { requestId, error });
+    // Log detailed error for debugging while returning safe message to client
+    console.error('Failed to create checkout session', {
+      requestId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     if (error instanceof Error && error.message.includes('Missing price ID')) {
       return createResponse(400, { message: error.message });

@@ -20,7 +20,10 @@ describe('createCheckoutSession', () => {
       expect.stringContaining('/api/payments/checkout'),
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client': 'bjj-poster-web',
+        },
         body: JSON.stringify({ tier: 'pro', interval: 'month' }),
       })
     );

@@ -24,6 +24,7 @@ export async function createCheckoutSession(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Client': 'bjj-poster-web',
       },
       body: JSON.stringify(params),
     });

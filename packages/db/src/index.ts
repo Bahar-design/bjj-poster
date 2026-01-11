@@ -19,8 +19,16 @@ export type {
   CreateTemplateInput,
 } from './entities/template.js';
 
+export type {
+  User,
+  UserItem,
+  SubscriptionTier,
+  UpdateSubscriptionInput,
+} from './entities/user.js';
+
 // Re-export repository classes (for testing/DI)
 export { TemplateRepository } from './repositories/template-repository.js';
+export { UserRepository } from './repositories/user-repository.js';
 
 // Re-export client and config
 export { dynamoClient } from './client.js';
@@ -34,10 +42,10 @@ export { TABLE_NAME, GSI_NAMES } from './config.js';
 
 import { dynamoClient } from './client.js';
 import { TemplateRepository } from './repositories/template-repository.js';
+import { UserRepository } from './repositories/user-repository.js';
 
 export const db = {
   templates: new TemplateRepository(dynamoClient),
-  // Add more repositories as they're implemented:
-  // users: new UserRepository(dynamoClient),
+  users: new UserRepository(dynamoClient),
   // posters: new PosterRepository(dynamoClient),
 };
