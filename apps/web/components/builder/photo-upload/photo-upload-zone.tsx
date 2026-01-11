@@ -30,7 +30,7 @@ export function PhotoUploadZone({
   }, [clear, setPhoto]);
 
   return (
-    <div className={cn('w-full', className)}>
+    <div data-tour="photo-upload" className={cn('w-full', className)}>
       {preview ? (
         <ImageCropper
           preview={preview}
