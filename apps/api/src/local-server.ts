@@ -4,18 +4,23 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express';
-import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
+import type { APIGatewayProxyEvent, Context } from 'aws-lambda';
 
 // Import handlers as they're created
 import { handler as helloHandler } from './handlers/hello/index.js';
 import { listTemplatesHandler } from './handlers/templates/index.js';
+import { createCheckoutSessionHandler, stripeWebhookHandler } from './handlers/payments/index.js';
 // import { handler as getProfile } from './handlers/user/get-profile';
 // import { handler as createPoster } from './handlers/poster/create-poster';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Stripe webhook needs raw body for signature verification
+// Must be registered BEFORE express.json() middleware
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
+// JSON parsing for all other routes
 app.use(express.json());
 app.use((req, res, next) => {
   // CORS for local development
@@ -30,7 +35,7 @@ app.use((req, res, next) => {
 });
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
   next();
 });
@@ -39,13 +44,24 @@ app.use((req, res, next) => {
  * Adapter to convert Express request to Lambda event format
  */
 function createLambdaEvent(req: Request): APIGatewayProxyEvent {
+  // Handle body: if Buffer (from express.raw), convert to string
+  // Otherwise JSON.stringify for regular parsed JSON
+  let body: string | null = null;
+  if (req.body) {
+    if (Buffer.isBuffer(req.body)) {
+      body = req.body.toString('utf-8');
+    } else {
+      body = JSON.stringify(req.body);
+    }
+  }
+
   return {
     httpMethod: req.method,
     path: req.path,
     pathParameters: req.params,
     queryStringParameters: req.query as Record<string, string>,
     headers: req.headers as Record<string, string>,
-    body: req.body ? JSON.stringify(req.body) : null,
+    body,
     isBase64Encoded: false,
     requestContext: {
       requestId: `local-${Date.now()}`,
@@ -84,10 +100,8 @@ function createLambdaContext(): Context {
   };
 }
 
-type LambdaHandler = (
-  event: APIGatewayProxyEvent,
-  context: Context
-) => Promise<APIGatewayProxyResult>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LambdaHandler = any;
 
 /**
  * Wrap a Lambda handler to work with Express
@@ -126,7 +140,7 @@ function lambdaAdapter(handler: LambdaHandler) {
 // ===========================================
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -159,12 +173,18 @@ app.get('/api/users/:id', (req, res) => {
 // Templates - real handler using database
 app.get('/api/templates', lambdaAdapter(listTemplatesHandler));
 
-app.get('/api/posters', (req, res) => {
+app.get('/api/posters', (_req, res) => {
   res.json([]);
 });
 
+// Payments - Stripe integration
+app.post('/api/payments/checkout', lambdaAdapter(createCheckoutSessionHandler));
+
+// Stripe webhook (raw body parsing configured above for signature verification)
+app.post('/api/payments/webhook', lambdaAdapter(stripeWebhookHandler));
+
 // Error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
     message: 'Internal server error',
