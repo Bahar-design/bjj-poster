@@ -88,4 +88,24 @@ describe('GenerationLoadingScreen', () => {
     // Should be back to first tip
     expect(screen.getByText(/pro tip: remove backgrounds/i)).toBeInTheDocument();
   });
+
+  it('displays initial time estimate', () => {
+    render(<GenerationLoadingScreen progress={0} />);
+
+    expect(screen.getByText(/usually takes 15-20 seconds/i)).toBeInTheDocument();
+  });
+
+  it('updates time estimate after 20 seconds', () => {
+    render(<GenerationLoadingScreen progress={50} />);
+
+    expect(screen.getByText(/usually takes 15-20 seconds/i)).toBeInTheDocument();
+
+    // Advance 20 seconds
+    act(() => {
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(screen.getByText(/almost done! a few more seconds/i)).toBeInTheDocument();
+    expect(screen.queryByText(/usually takes 15-20 seconds/i)).not.toBeInTheDocument();
+  });
 });

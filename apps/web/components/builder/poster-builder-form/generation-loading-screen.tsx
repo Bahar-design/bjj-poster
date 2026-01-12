@@ -17,6 +17,7 @@ interface GenerationLoadingScreenProps {
 
 export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenProps): JSX.Element {
   const [tipIndex, setTipIndex] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Rotate tips every 5 seconds
   useEffect(() => {
@@ -26,6 +27,20 @@ export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenPro
 
     return () => clearInterval(interval);
   }, []);
+
+  // Track elapsed time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const timeMessage =
+    elapsedSeconds >= 20
+      ? "Almost done! A few more seconds..."
+      : "Usually takes 15-20 seconds";
 
   return (
     <div
@@ -77,6 +92,11 @@ export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenPro
             {TIPS[tipIndex]}
           </p>
         </div>
+
+        {/* Time Estimate */}
+        <p className="mt-4 text-sm text-surface-400">
+          {timeMessage}
+        </p>
       </div>
     </div>
   );
