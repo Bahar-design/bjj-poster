@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { Award } from 'lucide-react';
 
 const TIPS = [
-  "Pro tip: Remove backgrounds for cleaner posters (Pro feature)",
-  "Did you know? Pro users get HD 1080p exports",
-  "Upgrade to Pro to remove watermarks",
-  "Premium users can create unlimited posters",
-  "Pro includes background removal for cleaner photos",
+  "💡 Pro tip: Remove backgrounds for cleaner posters (Pro feature)",
+  "💡 Did you know? Pro users get HD 1080p exports",
+  "💡 Upgrade to Pro to remove watermarks",
+  "💡 Premium users can create unlimited posters",
+  "💡 Pro includes background removal for cleaner photos",
 ];
 
 interface GenerationLoadingScreenProps {
