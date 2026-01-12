@@ -39,4 +39,11 @@ describe('GenerationLoadingScreen', () => {
     const progressBar = screen.getByRole('progressbar');
     expect(progressBar).toHaveAttribute('aria-valuenow', '100');
   });
+
+  it('displays a tip on initial render', () => {
+    render(<GenerationLoadingScreen progress={50} />);
+
+    // Should show the first tip
+    expect(screen.getByText(/pro tip|did you know|upgrade to pro|premium users/i)).toBeInTheDocument();
+  });
 });

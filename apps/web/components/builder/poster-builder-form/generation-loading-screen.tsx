@@ -1,12 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { Award } from 'lucide-react';
+
+const TIPS = [
+  "Pro tip: Remove backgrounds for cleaner posters (Pro feature)",
+  "Did you know? Pro users get HD 1080p exports",
+  "Upgrade to Pro to remove watermarks",
+  "Premium users can create unlimited posters",
+  "Pro includes background removal for cleaner photos",
+];
 
 interface GenerationLoadingScreenProps {
   progress: number;
 }
 
 export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenProps): JSX.Element {
+  const [tipIndex] = useState(0);
+
   return (
     <div
       role="dialog"
@@ -44,8 +55,18 @@ export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenPro
         </div>
 
         {/* Progress percentage */}
-        <div className="text-right">
+        <div className="mb-6 text-right">
           <span className="font-mono text-lg text-gold-400">{progress}%</span>
+        </div>
+
+        {/* Rotating Tips */}
+        <div className="min-h-[3rem] px-4">
+          <p
+            key={tipIndex}
+            className="text-sm text-surface-300 animate-fade-in"
+          >
+            {TIPS[tipIndex]}
+          </p>
         </div>
       </div>
     </div>
