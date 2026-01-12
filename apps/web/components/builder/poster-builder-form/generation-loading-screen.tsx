@@ -25,8 +25,28 @@ export function GenerationLoadingScreen({ progress }: GenerationLoadingScreenPro
           </div>
         </div>
 
+        {/* Progress Bar */}
+        <div className="mb-2">
+          <div
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Generation progress"
+            className="h-2 w-full rounded-full bg-surface-800"
+          >
+            <div
+              data-testid="progress-fill"
+              className="h-full rounded-full bg-gradient-to-r from-gold-500 to-gold-400 transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
         {/* Progress percentage */}
-        <span className="font-mono text-lg text-gold-400">{progress}%</span>
+        <div className="text-right">
+          <span className="font-mono text-lg text-gold-400">{progress}%</span>
+        </div>
       </div>
     </div>
   );
