@@ -3,7 +3,7 @@ import { PosterBuilderForm } from '@/components/builder';
 
 export default function BuilderPage(): JSX.Element {
   return (
-    <div className="px-4 py-8 md:px-8 md:py-12">
+    <main id="main-content" className="px-4 py-8 md:px-8 md:py-12">
       {/* Page Header */}
       <div className="mb-10 max-w-2xl">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1">
@@ -23,6 +23,6 @@ export default function BuilderPage(): JSX.Element {
       <div className="relative">
         <PosterBuilderForm />
       </div>
-    </div>
+    </main>
   );
 }
