@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-surface-950 overflow-hidden">
+    <main id="main-content" className="min-h-screen bg-surface-950 overflow-hidden">
       {/* Hero Section */}
       <section aria-label="Hero" className="relative min-h-screen">
         {/* Background Effects */}

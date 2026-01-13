@@ -79,6 +79,12 @@ describe('Landing Page', () => {
       expect(screen.getByRole('main')).toBeInTheDocument();
     });
 
+    it('has main-content id for skip link target', () => {
+      render(<Home />);
+      const main = screen.getByRole('main');
+      expect(main).toHaveAttribute('id', 'main-content');
+    });
+
     it('all images have alt text', () => {
       render(<Home />);
       const images = screen.getAllByRole('img');
