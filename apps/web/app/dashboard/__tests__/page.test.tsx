@@ -45,6 +45,12 @@ describe('Dashboard Page', () => {
       expect(screen.getByRole('main')).toBeInTheDocument();
     });
 
+    it('has main-content id for skip link target', () => {
+      render(<DashboardPage />);
+      const main = screen.getByRole('main');
+      expect(main).toHaveAttribute('id', 'main-content');
+    });
+
     it('renders the welcome section', () => {
       render(<DashboardPage />);
       expect(screen.getByText(/welcome back/i)).toBeInTheDocument();
