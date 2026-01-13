@@ -21,6 +21,17 @@ describe('UserMenu', () => {
     vi.clearAllMocks();
   });
 
+  it('has accessible aria-label on trigger button', () => {
+    mockUseUserStore.mockImplementation((selector) =>
+      selector({ user: { name: 'John Doe', email: 'john@example.com' }, resetUser: mockResetUser })
+    );
+
+    render(<UserMenu />);
+
+    const button = screen.getByRole('button', { name: /user menu/i });
+    expect(button).toBeInTheDocument();
+  });
+
   it('shows initial when user has name', () => {
     mockUseUserStore.mockImplementation((selector) =>
       selector({ user: { name: 'John Doe', email: 'john@example.com' }, resetUser: mockResetUser })

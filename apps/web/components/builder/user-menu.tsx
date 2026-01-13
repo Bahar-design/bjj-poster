@@ -36,6 +36,7 @@ export function UserMenu({ className }: UserMenuProps): JSX.Element {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
+          aria-label="User menu"
           className={cn(
             'flex items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-primary-900',
             className
