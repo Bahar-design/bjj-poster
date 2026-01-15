@@ -6,7 +6,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Premium Combat Editorial Color System
+        // BJJ-Inspired Color System
+        // Deep blacks like a competition gi
         surface: {
           '50': '#fafafa',
           '100': '#f5f5f5',
@@ -21,6 +22,7 @@ const config: Config = {
           '900': '#141414',
           '950': '#0a0a0a',
         },
+        // Championship gold - victory, achievement
         gold: {
           '50': '#fefdf8',
           '100': '#fef9e7',
@@ -34,14 +36,54 @@ const config: Config = {
           '900': '#7a5a0c',
           DEFAULT: '#e9c46a',
         },
+        // Mat red - competition, intensity, passion
+        mat: {
+          '50': '#fef2f2',
+          '100': '#fee2e2',
+          '200': '#fecaca',
+          '300': '#fca5a5',
+          '400': '#f87171',
+          '500': '#C41E3A', // Primary mat red
+          '600': '#A3162D',
+          '700': '#7F1122',
+          '800': '#5C0C18',
+          '900': '#3D080F',
+          DEFAULT: '#C41E3A',
+        },
+        // BJJ Belt colors for accents
+        belt: {
+          white: '#F5F5F0',
+          blue: '#1E3A5F',
+          purple: '#4A1259',
+          brown: '#5D3A1A',
+          black: '#1a1a1a',
+          coral: '#FF6B6B', // Coral belt (high degrees)
+        },
+        // Gi fabric off-white
+        gi: {
+          white: '#F5F5F0',
+          cream: '#FAF8F5',
+        },
         // Semantic colors with CSS vars
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+          '50': '#faf5f0',
+          '100': '#f5ebe0',
+          '200': '#e9d5bd',
+          '300': '#dbbf9a',
+          '400': '#c9a477',
+          '500': '#b8935f',
+          '600': '#a67d4a',
+          '700': '#8a6840',
+          '800': '#6e5335',
+          '900': '#52402a',
         },
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          gold: '#e9c46a',
+          red: '#C41E3A',
         },
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -73,6 +115,8 @@ const config: Config = {
         display: ['var(--font-bebas-neue)', 'sans-serif'],
         body: ['var(--font-outfit)', 'sans-serif'],
         mono: ['var(--font-jetbrains-mono)', 'monospace'],
+        // Adding a Japanese-inspired font option
+        accent: ['var(--font-bebas-neue)', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -84,14 +128,30 @@ const config: Config = {
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
         'gold-shimmer': 'linear-gradient(110deg, transparent 25%, rgba(233, 196, 106, 0.1) 50%, transparent 75%)',
         'hero-glow': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(233, 196, 106, 0.15), transparent)',
+        // Mat texture gradient
+        'mat-texture': 'linear-gradient(135deg, rgba(196, 30, 58, 0.1) 0%, transparent 50%, rgba(196, 30, 58, 0.05) 100%)',
+        // Gi weave pattern hint
+        'gi-weave': 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px)',
+        // Dramatic spotlight
+        'spotlight': 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(233, 196, 106, 0.2), transparent 70%)',
+        // Belt gradient
+        'belt-shine': 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.2) 100%)',
       },
       boxShadow: {
         'gold-sm': '0 0 10px rgba(233, 196, 106, 0.1)',
         'gold-md': '0 0 20px rgba(233, 196, 106, 0.15)',
         'gold-lg': '0 0 40px rgba(233, 196, 106, 0.2)',
         'gold-glow': '0 0 60px rgba(233, 196, 106, 0.3)',
+        'gold-intense': '0 0 80px rgba(233, 196, 106, 0.4), 0 0 120px rgba(233, 196, 106, 0.2)',
+        // Mat red shadows
+        'mat-glow': '0 0 40px rgba(196, 30, 58, 0.3)',
+        'mat-intense': '0 0 60px rgba(196, 30, 58, 0.4)',
+        // Dramatic elevation
+        'dramatic': '0 25px 80px -20px rgba(0, 0, 0, 0.7), 0 10px 30px -10px rgba(0, 0, 0, 0.5)',
         'inner-highlight': 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
         'card-hover': '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        // Belt shadow
+        'belt': '0 20px 60px -15px rgba(0, 0, 0, 0.5)',
       },
       animation: {
         'fade-in': 'fade-in 0.6s ease-out forwards',
@@ -109,6 +169,11 @@ const config: Config = {
         'text-reveal': 'text-reveal 0.8s ease-out forwards',
         'blur-in': 'blur-in 0.6s ease-out forwards',
         'border-glow': 'border-glow 3s ease-in-out infinite',
+        // New dramatic animations
+        'belt-wave': 'belt-wave 8s ease-in-out infinite',
+        'mat-pulse': 'mat-pulse 4s ease-in-out infinite',
+        'champion-glow': 'champion-glow 3s ease-in-out infinite',
+        'entrance-dramatic': 'entrance-dramatic 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       keyframes: {
         'fade-in': {
@@ -167,11 +232,33 @@ const config: Config = {
           '0%, 100%': { borderColor: 'rgba(233, 196, 106, 0.3)' },
           '50%': { borderColor: 'rgba(233, 196, 106, 0.6)' },
         },
+        // New dramatic keyframes
+        'belt-wave': {
+          '0%, 100%': { transform: 'translateY(0) rotate(-12deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(-10deg)' },
+        },
+        'mat-pulse': {
+          '0%, 100%': { opacity: '0.05' },
+          '50%': { opacity: '0.1' },
+        },
+        'champion-glow': {
+          '0%, 100%': {
+            boxShadow: '0 0 30px rgba(233, 196, 106, 0.3), 0 0 60px rgba(233, 196, 106, 0.1)',
+          },
+          '50%': {
+            boxShadow: '0 0 50px rgba(233, 196, 106, 0.5), 0 0 100px rgba(233, 196, 106, 0.2)',
+          },
+        },
+        'entrance-dramatic': {
+          '0%': { opacity: '0', transform: 'translateY(40px) scale(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
       },
       transitionTimingFunction: {
         'out-expo': 'cubic-bezier(0.19, 1, 0.22, 1)',
         'in-expo': 'cubic-bezier(0.95, 0.05, 0.795, 0.035)',
         'out-back': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'dramatic': 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

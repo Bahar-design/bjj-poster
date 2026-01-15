@@ -1,28 +1,96 @@
-import { Sparkles } from 'lucide-react';
+'use client';
+
+import { Sparkles, Trophy } from 'lucide-react';
 import { PosterBuilderForm } from '@/components/builder';
+import { PageTransition, motion } from '@/components/ui/motion';
+import { easings } from '@/lib/animations';
 
 export default function BuilderPage(): JSX.Element {
   return (
-    <main id="main-content" className="px-4 py-8 md:px-8 md:py-12">
-      {/* Page Header */}
-      <div className="mb-10 max-w-2xl">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1">
-          <Sparkles className="h-3.5 w-3.5 text-gold-500" />
-          <span className="text-xs font-medium text-gold-400">Poster Builder</span>
+    <PageTransition>
+      <div className="relative min-h-screen overflow-hidden">
+        {/* Background atmospheric effects - creative workspace feel */}
+        <div className="pointer-events-none fixed inset-0">
+          {/* Top-left gold spotlight - like arena lighting on the workspace */}
+          <div className="absolute -left-20 -top-20 h-[600px] w-[600px] bg-gradient-radial from-gold-500/8 via-gold-500/3 to-transparent" />
+
+          {/* Bottom-right mat red glow - adds warmth */}
+          <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-mat-500/5 blur-[100px]" />
+
+          {/* Subtle diagonal light beam */}
+          <div className="absolute -right-1/4 top-0 h-full w-1/2 rotate-12 bg-gradient-to-b from-gold-500/[0.02] via-transparent to-transparent" />
+
+          {/* Fine grain texture */}
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNCIvPjwvc3ZnPg==')] opacity-60" />
         </div>
 
-        <h1 className="font-display text-4xl tracking-wide text-white md:text-5xl">
-          CREATE YOUR POSTER
-        </h1>
-        <p className="mt-3 text-lg text-surface-400">
-          Fill in your details, choose a template, and generate a professional tournament poster.
-        </p>
-      </div>
+        <main id="main-content" className="relative z-10 px-4 py-8 md:px-8 md:py-12">
+          {/* Page Header */}
+          <div className="mb-10 max-w-2xl">
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.4, ease: easings.elastic }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1"
+            >
+              <motion.div
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-gold-500" />
+              </motion.div>
+              <span className="text-xs font-medium text-gold-400">Poster Builder</span>
+            </motion.div>
 
-      {/* Form Container */}
-      <div className="relative">
-        <PosterBuilderForm />
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: easings.easeOut }}
+              className="font-display text-4xl tracking-wide text-white md:text-5xl"
+            >
+              CREATE YOUR{' '}
+              <span className="relative inline-block">
+                <span className="text-gradient-gold">LEGACY</span>
+                {/* Trophy icon accent */}
+                <motion.span
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6, duration: 0.4, ease: easings.elastic }}
+                  className="absolute -right-8 -top-2 text-gold-500"
+                >
+                  <Trophy className="h-5 w-5" aria-hidden="true" />
+                </motion.span>
+              </span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: easings.easeOut }}
+              className="mt-3 text-lg text-surface-400"
+            >
+              Forge your championship poster. Upload your photo, customize the details, and immortalize your achievement.
+            </motion.p>
+
+            {/* Decorative line accent */}
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: 0.4, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 h-[2px] w-32 origin-left bg-gradient-to-r from-mat-500 via-gold-500/50 to-transparent"
+            />
+          </div>
+
+          {/* Form Container */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: easings.easeOut }}
+            className="relative"
+          >
+            <PosterBuilderForm />
+          </motion.div>
+        </main>
       </div>
-    </main>
+    </PageTransition>
   );
 }

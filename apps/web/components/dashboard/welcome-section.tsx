@@ -1,8 +1,10 @@
 'use client';
 
 import { useShallow } from 'zustand/react/shallow';
+import { motion } from 'framer-motion';
 import { useUserStore, UNLIMITED } from '@/lib/stores';
 import { UsageCard } from './usage-card';
+import { easings } from '@/lib/animations';
 
 export function WelcomeSection(): JSX.Element {
   const { user, postersThisMonth, postersLimit } = useUserStore(
@@ -21,18 +23,34 @@ export function WelcomeSection(): JSX.Element {
     <section className="mb-8">
       {/* Welcome Header */}
       <div className="mb-6">
-        <h1 className="font-display text-4xl tracking-wide text-white md:text-5xl">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: easings.easeOut }}
+          className="font-display text-4xl tracking-wide text-white md:text-5xl"
+        >
           WELCOME BACK{userName ? `, ${userName.toUpperCase()}` : ''}
-        </h1>
-        <p className="mt-2 text-surface-400">
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: easings.easeOut }}
+          className="mt-2 text-surface-400"
+        >
           {isAtLimit
             ? "You've reached your monthly limit. Upgrade to create more posters."
             : 'Ready to create your next championship poster?'}
-        </p>
+        </motion.p>
       </div>
 
       {/* Usage Card */}
-      <UsageCard />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: easings.easeOut }}
+      >
+        <UsageCard />
+      </motion.div>
     </section>
   );
 }

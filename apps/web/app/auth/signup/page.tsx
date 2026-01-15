@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { AuthForm } from '@/components/auth/auth-form';
 import type { SignupFormData } from '@/lib/validations/auth';
+import { easings } from '@/lib/animations';
 
 export default function SignupPage(): JSX.Element {
   const router = useRouter();
@@ -31,11 +33,26 @@ export default function SignupPage(): JSX.Element {
 
   return (
     <>
-      <div className="mb-8 text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1">
-          <Sparkles className="h-3.5 w-3.5 text-gold-500" />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: easings.easeOut }}
+        className="mb-8 text-center"
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: easings.elastic }}
+          className="mb-4 inline-flex items-center gap-2 rounded-full border border-gold-500/30 bg-gold-500/10 px-3 py-1"
+        >
+          <motion.div
+            animate={{ rotate: [0, 15, -15, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-gold-500" />
+          </motion.div>
           <span className="text-xs font-medium text-gold-400">Free to start</span>
-        </div>
+        </motion.div>
 
         <h1 className="font-display text-3xl tracking-wide text-white">
           CREATE ACCOUNT
@@ -43,16 +60,30 @@ export default function SignupPage(): JSX.Element {
         <p className="mt-2 text-surface-400">
           Start creating championship posters
         </p>
-      </div>
+      </motion.div>
 
-      {error && (
-        <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          {error}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -10, height: 0 }}
+            transition={{ duration: 0.3, ease: easings.easeOut }}
+            className="mb-6 flex items-center gap-3 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400"
+          >
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <AuthForm mode="signup" onSubmit={handleSubmit} />
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: easings.easeOut }}
+      >
+        <AuthForm mode="signup" onSubmit={handleSubmit} />
+      </motion.div>
     </>
   );
 }
