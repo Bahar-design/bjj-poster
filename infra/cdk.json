@@ -1,21 +1,7 @@
 {
-  "app": "npx tsx bin/app.ts",
-  "watch": {
-    "include": ["**"],
-    "exclude": [
-      "README.md",
-      "cdk*.json",
-      "**/*.d.ts",
-      "**/*.js",
-      "tsconfig.json",
-      "package*.json",
-      "node_modules",
-      "cdk.out"
-    ]
-  },
+  "app": "node bin/bjj-poster-app.js",
   "context": {
-    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
-    "@aws-cdk/core:checkSecretUsage": true,
-    "@aws-cdk/core:target-partitions": ["aws", "aws-cn"]
+    "@aws-cdk/core:enableStackNameDuplicates": false,
+    "@aws-cdk/core:stackRelativeExports": true
   }
 }

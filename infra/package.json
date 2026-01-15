@@ -1,28 +1,19 @@
 {
   "name": "@bjj-poster/infra",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "AWS CDK infrastructure for BJJ Poster App",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "tsc",
-    "cdk": "cdk",
-    "synth": "cdk synth",
-    "deploy": "cdk deploy",
-    "deploy:dev": "cdk deploy --all --context stage=dev",
-    "deploy:prod": "cdk deploy --all --context stage=prod",
-    "diff": "cdk diff",
-    "destroy": "cdk destroy",
-    "type-check": "tsc --noEmit"
-  },
-  "dependencies": {
-    "aws-cdk-lib": "^2.170.0",
-    "constructs": "^10.4.2",
-    "source-map-support": "^0.5.21"
+    "watch": "tsc -w",
+    "cdk": "cdk"
   },
   "devDependencies": {
-    "@types/node": "^22.10.1",
-    "aws-cdk": "^2.170.0",
-    "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^25.0.8",
+    "aws-cdk": "^2.1101.0",
+    "aws-cdk-lib": "^2.234.1",
+    "constructs": "^10.4.4",
+    "source-map-support": "^0.5.21",
+    "typescript": "^5.9.3"
   }
 }
