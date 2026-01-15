@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { DatabaseStack } from '../lib/database-stack';
 import { StorageStack } from '../lib/storage-stack';
 import { ApiStack } from '../lib/api-stack';
+import { CdnStack } from '../lib/cdn-stack';
 import { devConfig } from '../lib/config/dev';
 import { prodConfig } from '../lib/config/prod';
 
@@ -30,6 +31,16 @@ const apiStack = new ApiStack(
 
 apiStack.addDependency(databaseStack);
 apiStack.addDependency(storageStack);
+
+const cdnStack = new CdnStack(
+  app,
+  `BjjPosterCdn-${stage}`,
+  config,
+  storageStack.posterBucket,
+  { env }
+);
+
+cdnStack.addDependency(storageStack);
 
 cdk.Tags.of(app).add('Project', 'BJJ Poster App');
 cdk.Tags.of(app).add('Environment', stage);
